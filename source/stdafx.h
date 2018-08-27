@@ -42,7 +42,7 @@ enum CLEO_Version
     CLEO_VERSION = CLEO_VER_4,
 };
 #define VERSION_LONG		0x04031700
-#define VERSION_STRING	"4.3"
+#define VERSION_STRING	"4.3.23.0"
 
 #define CPOOL_USE_HANDLE_ACCESS
 
