@@ -9,15 +9,21 @@ EXPORTS
 	_CLEO_ReadStringOpcodeParam@12			@6
 	_CLEO_RecordOpcodeParams@8				@7
 	_CLEO_RegisterOpcode@8					@8
-	_CLEO_RetrieveOpcodeParams@8				@9
+	_CLEO_RetrieveOpcodeParams@8			@9
 	_CLEO_SetFloatOpcodeParam@8				@10
 	_CLEO_SetIntOpcodeParam@8				@11
 	_CLEO_SetThreadCondResult@8				@12
-	_CLEO_SkipOpcodeParams@8					@13
-	_CLEO_ThreadJumpAtLabelPtr@8				@14
+	_CLEO_SkipOpcodeParams@8				@13
+	_CLEO_ThreadJumpAtLabelPtr@8			@14
 	_CLEO_WriteStringOpcodeParam@8			@15
 	missionLocals							@16
-	opcodeParams								@17
+	opcodeParams							@17
 	staticThreads							@18
 	_CLEO_GetPointerToScriptVariable@4		@19
 	_CLEO_ReadStringPointerOpcodeParam@12	@20
+	_CLEO_GetScriptTextureById@8			@21
+	_CLEO_GetInternalAudioStream@8			@22
+	_CLEO_CreateCustomScript@12				@23
+	_CLEO_GetLastCreatedCustomScript@0		@24
+	_CLEO_AddScriptDeleteDelegate@4			@25
+	_CLEO_RemoveScriptDeleteDelegate@4		@26

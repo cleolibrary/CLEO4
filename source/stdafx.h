@@ -41,8 +41,8 @@ enum CLEO_Version
 
     CLEO_VERSION = CLEO_VER_4,
 };
-#define VERSION_LONG		0x04031700
-#define VERSION_STRING	"4.3.23.0"
+#define VERSION_LONG		0x04032302
+#define VERSION_STRING	"4.3.23.2"
 
 #define CPOOL_USE_HANDLE_ACCESS
 
@@ -117,12 +117,12 @@ inline CEntity* GetWeaponTarget(CPed* pSelf)
 
 inline bool IsAvailable(CPed* pSelf)
 {
-    return pSelf->m_pedState != PEDSTATE_DIE && pSelf->m_pedState != PEDSTATE_DEAD;
+    return pSelf->m_nPedState != PEDSTATE_DIE && pSelf->m_nPedState != PEDSTATE_DEAD;
 }
 
 inline bool	IsWrecked(CVehicle* pSelf)
 {
-    return pSelf->m_nStatus == STATUS_WRECKED || pSelf->m_nFlags.bIsDrowning;
+    return pSelf->m_nStatus == STATUS_WRECKED || pSelf->m_nVehicleFlags.bIsDrowning;
 }
 
 

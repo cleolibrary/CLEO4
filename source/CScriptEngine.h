@@ -23,12 +23,25 @@ namespace CLEO
         BYTE UseTextCommands;
         int NumDraws;
         int NumTexts;
+		CCustomScript *parentThread;
+		std::list<CCustomScript*> childThreads;
         std::string working_path;
         std::list<RwTexture*> script_textures;
         std::vector<BYTE> script_draws;
         std::vector<BYTE> script_texts;
 
     public:
+		inline RwTexture* GetScriptTextureById(unsigned int id)
+		{
+			if (script_textures.size() > id)
+			{
+				auto it = script_textures.begin();
+				std::advance(it, id);
+				return *it;
+			}
+			return nullptr;
+		}
+
         inline SCRIPT_VAR * GetVarsPtr() { return LocalVar; }
         inline WORD GetScmFunction() { return MemRead<WORD>(reinterpret_cast<BYTE*>(this) + 0xDD); }
         inline void SetScmFunction(WORD id) { MemWrite<WORD>(reinterpret_cast<BYTE*>(this) + 0xDD, id); }
@@ -43,7 +56,7 @@ namespace CLEO
         inline DWORD& GetLastSearchPed() { return LastSearchPed; }
         inline DWORD& GetLastSearchVehicle() { return LastSearchCar; }
         inline DWORD& GetLastSearchObject() { return LastSearchObj; }
-        CCustomScript(const char *szFileName, bool bIsMiss = false);
+		CCustomScript(const char *szFileName, bool bIsMiss = false, CCustomScript *parent = nullptr, int label = 0);
         ~CCustomScript();
 
         void Process();
@@ -124,4 +137,8 @@ namespace CLEO
     }
 
     extern BYTE *scmBlock, *missionBlock;
+    extern CCustomScript *lastScriptCreated;
+
+	extern float VectorSqrMagnitude(CVector vector);
 }
+

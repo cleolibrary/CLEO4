@@ -17,7 +17,7 @@ namespace CLEO
             FxtEntry(const char *_text, bool _static = false);
         };
 
-        typedef std::tr1::unordered_map<std::string, FxtEntry *,
+        typedef std::unordered_map<std::string, FxtEntry *,
             decltype(&crc32FromUpcaseStdString)> fxt_map_type;
         typedef fxt_map_type::iterator fxt_iterator;
         typedef fxt_map_type::const_iterator const_fxt_iterator;

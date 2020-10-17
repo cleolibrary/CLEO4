@@ -27,6 +27,8 @@ namespace CLEO
     void(__thiscall * GetScriptStringParam)(CRunningScript *, char* buf, BYTE len);
     SCRIPT_VAR *	(__thiscall * GetScriptParamPointer2)(CRunningScript *, int __unused__);
 
+	void RunScriptDeleteDelegate(CRunningScript *script);
+
     void __fastcall _AddScriptToQueue(CRunningScript *pScript, int dummy, CRunningScript **queue)
     {
         _asm
@@ -167,6 +169,7 @@ namespace CLEO
     BYTE *scriptTexts;
 
     CRunningScript **inactiveThreadQueue, **activeThreadQueue;
+	CCustomScript *lastScriptCreated = nullptr;
 
     // called to initialise the scripts (after the main.scm has actually had a chance to set up)
     void OnInitScm1(void)
@@ -407,16 +410,16 @@ namespace CLEO
         for (int i = 0; i<NUM_STORED_TEXTS; ++i)
         {
             CTextDrawer * pText = (CTextDrawer*)&scriptTexts[i*TEXT_DATA_SIZE];
-            pText->m_fScaleX = 0.48;
-            pText->m_fScaleY = 1.12;
+            pText->m_fScaleX = 0.48f;
+            pText->m_fScaleY = 1.12f;
             pText->m_Colour = CRGBA(0xE1, 0xE1, 0xE1, 0xFF);
             pText->m_bJustify = false;
             pText->m_bAlignRight = false;
             pText->m_bCenter = false;
             pText->m_bBackground = false;
             pText->m_bUnk1 = false;
-            pText->m_fLineHeight = 182.0;
-            pText->m_fLineWidth = 640.0;
+            pText->m_fLineHeight = 182.0f;
+            pText->m_fLineWidth = 640.0f;
             pText->m_BackgroundColour = CRGBA(0x80, 0x80, 0x80, 0x80);
             pText->m_bProportional = true;
             pText->m_EffectColour = CRGBA(0, 0, 0, 0xFF);
@@ -456,8 +459,9 @@ namespace CLEO
             if (*useTextCommands == 1)
                 *useTextCommands = 0;
         }
+		
+		ProcessScript(this);
 
-        ProcessScript(this);
         StoreScriptSpecifics();
     }
     void CCustomScript::Draw(char bBeforeFade)
@@ -898,6 +902,14 @@ namespace CLEO
 
     void CScriptEngine::RemoveCustomScript(CCustomScript *cs)
     {
+		if (cs->parentThread)
+		{
+			cs->BaseIP = 0; // don't delete BaseIP if child thread
+		}
+		for (auto childThread : cs->childThreads)
+		{
+			CScriptEngine::RemoveCustomScript(childThread);
+		}
         if (cs == CustomMission)
         {
             TRACE("Unregistering custom mission named %s", cs->Name);
@@ -981,7 +993,7 @@ namespace CLEO
         });
     }
 
-    CCustomScript::CCustomScript(const char *szFileName, bool bIsMiss)
+    CCustomScript::CCustomScript(const char *szFileName, bool bIsMiss, CCustomScript *parent, int label)
         : CRunningScript(), bSaveEnabled(false), bOK(false),
         LastSearchPed(0), LastSearchCar(0), LastSearchObj(0),
         CompatVer(CLEO_VERSION)
@@ -996,29 +1008,48 @@ namespace CLEO
 
         try
         {
-            using std::ios;
-            std::ifstream is(szFileName, std::ios::binary);
-            is.exceptions(std::ios::badbit | std::ios::failbit);
-            std::size_t length;
-            is.seekg(0, std::ios::end);
-            length = is.tellg();
-            is.seekg(0, std::ios::beg);
-            if (bIsMiss)
-            {
-                if (*MissionLoaded)
-                    throw std::logic_error("Starting of custom mission when other mission loaded");
-                *MissionLoaded = 1;
-                BaseIP = CurrentIP = missionBlock;
-            }
-            else BaseIP = CurrentIP = new BYTE[length];
-            is.read(reinterpret_cast<char *>(BaseIP), length);
+			std::ifstream is;
+			if (label != 0) // Create external from label.
+			{
+				if (!parent)
+					throw std::logic_error("Trying to create external thread from label without parent thread");
+				BaseIP = parent->GetBasePointer();
+				CurrentIP = parent->GetBasePointer() - label;
+				memcpy(Name, parent->Name, sizeof(Name));
+				dwChecksum = parent->dwChecksum;
+				parentThread = parent;
+				parent->childThreads.push_back(this);
+			}
+			else
+			{
+				using std::ios;
+				std::ifstream is(szFileName, std::ios::binary);
+				is.exceptions(std::ios::badbit | std::ios::failbit);
+				std::size_t length;
+				is.seekg(0, std::ios::end);
+				length = is.tellg();
+				is.seekg(0, std::ios::beg);
 
-            auto fname = strrchr(szFileName, '\\') + 1;
-            if (!fname) fname = strrchr(szFileName, '/') + 1;
-            if (fname < szFileName) fname = szFileName;
-            memcpy(Name, fname, sizeof(Name));
-            Name[7] = '\0';
-            dwChecksum = crc32(reinterpret_cast<BYTE *>(BaseIP), length);
+				if (bIsMiss)
+				{
+					if (*MissionLoaded)
+						throw std::logic_error("Starting of custom mission when other mission loaded");
+					*MissionLoaded = 1;
+					BaseIP = CurrentIP = missionBlock;
+				}
+				else {
+					BaseIP = CurrentIP = new BYTE[length];
+				}
+				is.read(reinterpret_cast<char *>(BaseIP), length);
+
+				auto fname = strrchr(szFileName, '\\') + 1;
+				if (!fname) fname = strrchr(szFileName, '/') + 1;
+				if (fname < szFileName) fname = szFileName;
+				memcpy(Name, fname, sizeof(Name));
+				Name[7] = '\0';
+				dwChecksum = crc32(reinterpret_cast<BYTE *>(BaseIP), length);
+			}
+			lastScriptCreated = this;
             bOK = true;
         }
         catch (std::exception& e)
@@ -1034,5 +1065,9 @@ namespace CLEO
     CCustomScript::~CCustomScript()
     {
         if (BaseIP && !bIsMission) delete[] BaseIP;
+		RunScriptDeleteDelegate(reinterpret_cast<CRunningScript*>(this));
+		if (lastScriptCreated == this) lastScriptCreated = nullptr;
     }
+
+	float VectorSqrMagnitude(CVector vector) { return vector.x * vector.x + vector.y * vector.y + vector.z * vector.z; }
 }

@@ -2,6 +2,19 @@
 --------------------
      Change Log
 
+-- 4.3.23.2 --
+* Added the export of some functions required for new version of the CLEO+ plugin, and can be used in other plugins: CLEO_GetScriptTextureById, CLEO_GetInternalAudioStream, CLEO_CreateCustomScript, CLEO_GetLastCreatedCustomScript, CLEO_AddScriptDeleteDelegate, CLEO_RemoveScriptDeleteDelegate.
+* Fixed sounds not pausing when unfocus (thanks to dkluin).
+* Opcodes for finding entities (0AE1, 0AE2, 0AE3) now use a distance check with optimized performance, and ignore the distance limitation if the argument sent is greater than 1000.0.
+* Opcode for finding peds (0AE1) now makes it possible to send "-1" in the "pass_deads" parameter to ignore all checks and return literally all peds.
+* Opcode for car number of gears (0AB7) now returns from vehicle class itself instead of using model and handling arrays — now compatible with f92la and IndieVehicles.
+* Opcodes for blip target coordinates (0AB6), car name (0ADB) and spawn (0ADD) are now compatible with f92la.
+* Now the full version is shown in the SDK and menu text.
+
+-- 4.3.23.1 --
+* Now you can use string pointer in the file address parameter for .ini files opcodes.
+* Fixed the 0ABA opcode causing heap corruption.
+* Fixed shared variables not reset correctly. Which caused malfunctions in mods that use them and you play a new game or load game in a slot without the variables.
 
 -- 4.3.22 --
 * Now creates cleo, cleo/cleo_saves and cleo/cleo_text directories on startup if they do not exist

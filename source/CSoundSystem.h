@@ -86,6 +86,7 @@ namespace CLEO
         float GetVolume();
         void SetVolume(float val);
         void Loop(bool enable);
+		HSTREAM GetInternal();
 
         // overloadable actions
         virtual void Set3dPosition(const CVector& pos);

@@ -1,13 +1,13 @@
 /*
 	CLEO 4.3 header file;
-	Copyright (c) 2014 Alien, Deji;
+	Copyright (c) 2020 Alien, Deji, Junior_Djjr;
 */
 #pragma once
 
 #include <wtypes.h>
 
-#define CLEO_VERSION 0x04031700
-#define CLEO_VERSIONTEXT "4.3"
+#define CLEO_VERSION 0x04032302
+#define CLEO_VERSIONTEXT "4.3.23.2"
 
 //result of CLEO_GetGameVersion()
 #define GV_US10 0	//1.0 us
@@ -46,7 +46,8 @@ typedef int SCRIPT_HANDLE;
 typedef SCRIPT_HANDLE HANDLE_ACTOR, ACTOR, HACTOR, PED, HPED, HANDLE_PED;
 typedef SCRIPT_HANDLE HANDLE_CAR, CAR, HCAR, VEHICLE, HVEHICLE, HANDLE_VEHICLE;
 typedef SCRIPT_HANDLE HANDLE_OBJECT, OBJECT, HOBJECT;
-
+typedef SCRIPT_HANDLE HSTREAM;
+ 
 typedef struct CScriptThread CScriptThread;
 
 #pragma pack(push,1)
@@ -88,6 +89,7 @@ struct CScriptThread
 typedef int OpcodeResult;
 
 typedef OpcodeResult (CALLBACK* _pOpcodeHandler)(CScriptThread*);
+typedef void(*FuncScriptDeleteDelegateT) (CScriptThread*);
 
 #ifdef __cplusplus
 extern "C" {
@@ -125,6 +127,18 @@ void WINAPI CLEO_RetrieveOpcodeParams(CScriptThread *thread, int count);
 void WINAPI CLEO_RecordOpcodeParams(CScriptThread *thread, int count);
 
 SCRIPT_VAR * WINAPI CLEO_GetPointerToScriptVariable(CScriptThread *thread);
+
+DWORD WINAPI CLEO_GetScriptTextureById(CScriptThread* thread, int id); // ret RwTexture *
+
+HSTREAM WINAPI CLEO_GetInternalAudioStream(CScriptThread* thread, DWORD stream); // arg CAudioStream *
+
+CScriptThread* WINAPI CLEO_CreateCustomScript(CScriptThread* fromThread, const char *script_name, int label);
+
+CScriptThread* WINAPI CLEO_GetLastCreatedCustomScript();
+
+void WINAPI CLEO_AddScriptDeleteDelegate(FuncScriptDeleteDelegateT func);
+
+void WINAPI CLEO_RemoveScriptDeleteDelegate(FuncScriptDeleteDelegateT func);
 
 #ifdef __cplusplus
 }

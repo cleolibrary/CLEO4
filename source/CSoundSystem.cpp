@@ -35,7 +35,14 @@ namespace CLEO
                 switch (msg)
                 {
                 case WM_ACTIVATE:
-                    GetInstance().SoundSystem.ResumeStreams();
+					if (wparam == 0)
+					{
+						GetInstance().SoundSystem.PauseStreams();
+					}
+					else if (wparam == 1)
+					{
+						GetInstance().SoundSystem.ResumeStreams();
+					}
                     break;
                 case WM_KILLFOCUS:
                     GetInstance().SoundSystem.PauseStreams();
@@ -92,7 +99,7 @@ namespace CLEO
             info.name : "Unknown device");
 
         if (BASS_Init(default_device, 44100, BASS_DEVICE_3D | BASS_DEVICE_DEFAULT, hwnd, nullptr) &&
-            BASS_Set3DFactors(1.0, 0.3, 1.0) &&
+            BASS_Set3DFactors(1.0f, 0.3f, 1.0f) &&
             BASS_Set3DPosition(&pos, &vel, &front, &top))
         {
             TRACE("SoundSystem initialized");
@@ -320,6 +327,11 @@ namespace CLEO
     {
         BASS_ChannelFlags(streamInternal, enable ? BASS_SAMPLE_LOOP : 0, BASS_SAMPLE_LOOP);
     }
+
+	HSTREAM CAudioStream::GetInternal()
+	{
+		return streamInternal;
+	}
 
     void CAudioStream::Process()
     {
