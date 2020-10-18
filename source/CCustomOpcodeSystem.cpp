@@ -288,8 +288,9 @@ namespace CLEO {
 		Models = gvm.TranslateMemoryAddress(MA_MODELS);
 		SpawnCar = gvm.TranslateMemoryAddress(MA_SPAWN_CAR_FUNCTION);
 
+		// TODO: consider version-agnostic code
 		if (gvm.GetGameVersion() == GV_US10) {
-			// make it compatible with fastman92's limit adjuster
+			// make it compatible with fastman92's limit adjuster (only required for 1.0 US)
 			RadarBlips = injector::ReadMemory<CMarker*>(0x583A05 + 2, true);
 		}
 		else {
