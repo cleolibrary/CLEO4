@@ -993,6 +993,7 @@ namespace CLEO
         });
     }
 
+	// TODO: Consider split into 2 classes: CCustomExternalScript, CCustomChildScript
     CCustomScript::CCustomScript(const char *szFileName, bool bIsMiss, CCustomScript *parent, int label)
         : CRunningScript(), bSaveEnabled(false), bOK(false),
         LastSearchPed(0), LastSearchCar(0), LastSearchObj(0),
