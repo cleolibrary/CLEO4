@@ -22,7 +22,7 @@
 #include <game_sa/CPools.h>
 #include <game_sa/CMenuManager.h>
 #include <game_sa/CText.h>
-#include <game_sa/CRGBA.h>
+#include <game/CRGBA.h>
 #include <game_sa/cHandlingDataMgr.h>
 #include <game_sa/CPlayerPed.h>
 #include <game_sa/CRadar.h>
