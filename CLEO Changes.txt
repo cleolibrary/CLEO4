@@ -1,6 +1,8 @@
        CLEO 4
 --------------------
      Change Log
+-- 4.4.0 --
+* Dropped Windows XP support
 
 -- 4.3.24 --
 * Added the export of some functions required for new version of the CLEO+ plugin, and can be used in other plugins: CLEO_GetScriptTextureById, CLEO_GetInternalAudioStream, CLEO_CreateCustomScript, CLEO_GetLastCreatedCustomScript, CLEO_AddScriptDeleteDelegate, CLEO_RemoveScriptDeleteDelegate.
