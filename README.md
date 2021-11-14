@@ -8,7 +8,7 @@ CLEO requires an 'ASI Loader' installed to run which is provided with the releas
 No additional files are replaced, however the following files and folders are added:
 
 - cleo\ (CLEO script directory)
-- cleo\FileSystemOperations.cleo (File system plugin)
+- cleo\FileSystemOperations.cleo (file system plugin)
 - cleo\IniFiles.cleo (INI config plugin)
 - cleo\IntOperations.cleo (INT operations plugin)
 - cleo\cleo_saves\ (CLEO save directory)
