@@ -12,7 +12,7 @@ No additional files are replaced, however the following files and folders are ad
 - cleo\IniFiles.cleo (INI config plugin)
 - cleo\IntOperations.cleo (INT operations plugin)
 - cleo\cleo_saves\ (CLEO save directory)
-- cleo\cleo_text\ (CLEO text (.fxt) files)
+- cleo\cleo_text\ (CLEO text directory)
 - cleo.asi (core library)
 - bass.dll (audio engine library)
 - vorbisHooked.dll (Silent's ASI Loader)
