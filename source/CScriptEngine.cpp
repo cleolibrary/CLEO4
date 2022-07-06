@@ -689,7 +689,7 @@ namespace CLEO
 
         // steam offset is different, so get it manually for now
         CGameVersionManager& gvm = GetInstance().VersionManager;
-        int nSlot = gvm.GetGameVersion() != GV_STEAM ? *(BYTE*)&MenuManager->m_bSelectedSaveGame : *((BYTE*)MenuManager + 0x15B);
+        int nSlot = gvm.GetGameVersion() != GV_STEAM ? *(BYTE*)&MenuManager->m_nSelectedSaveGame : *((BYTE*)MenuManager + 0x15B);
 
         sprintf(safe_name, "./cleo/cleo_saves/cs%d.sav", nSlot);
 
@@ -818,7 +818,7 @@ namespace CLEO
 
             // steam offset is different, so get it manually for now
             CGameVersionManager& gvm = GetInstance().VersionManager;
-            int nSlot = gvm.GetGameVersion() != GV_STEAM ? *(BYTE*)&MenuManager->m_bSelectedSaveGame : *((BYTE*)MenuManager + 0x15B);
+            int nSlot = gvm.GetGameVersion() != GV_STEAM ? *(BYTE*)&MenuManager->m_nSelectedSaveGame : *((BYTE*)MenuManager + 0x15B);
 
             char safe_name[MAX_PATH];
             sprintf(safe_name, "./cleo/cleo_saves/cs%d.sav", nSlot);

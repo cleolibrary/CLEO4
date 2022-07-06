@@ -98,7 +98,7 @@ namespace CLEO
             total_devices, enabled_devices, default_device, BASS_GetDeviceInfo(default_device, &info) ?
             info.name : "Unknown device");
 
-        if (BASS_Init(default_device, 44100, BASS_DEVICE_3D | BASS_DEVICE_DEFAULT, hwnd, nullptr) &&
+        if (BASS_Init(default_device, 44100, BASS_DEVICE_3D, hwnd, nullptr) &&
             BASS_Set3DFactors(1.0f, 0.3f, 1.0f) &&
             BASS_Set3DPosition(&pos, &vel, &front, &top))
         {
@@ -402,7 +402,7 @@ namespace CLEO
             }
             else
             {
-                BASS_ChannelSet3DPosition(streamInternal, &BASS_3DVECTOR(position.y, position.z, position.x), nullptr, nullptr);
+                BASS_ChannelSet3DPosition(streamInternal, &position, nullptr, nullptr);
                 //BASS_ChannelGet3DPosition(streamInternal, &position, nullptr, nullptr);
             }
         }
