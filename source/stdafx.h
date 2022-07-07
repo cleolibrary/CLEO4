@@ -126,6 +126,26 @@ inline bool	IsWrecked(CVehicle* pSelf)
     return pSelf->m_nStatus == STATUS_WRECKED || pSelf->m_nVehicleFlags.bIsDrowning;
 }
 
+inline std::vector<BYTE> ReadFileToBytes(const char* filename)
+{
+    std::ifstream file(filename, std::ios::binary);
+    file.unsetf(std::ios::skipws);
+
+    file.seekg(0, std::ios::end);
+    const std::streampos fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // reserve capacity
+    std::vector<BYTE> vec;
+    vec.reserve(fileSize);
+
+    // read the data:
+    vec.insert(vec.begin(),
+        std::istream_iterator<BYTE>(file),
+        std::istream_iterator<BYTE>());
+
+    return vec;
+}
 
 #define OP_NOP			0x90
 #define OP_RET			0xC3

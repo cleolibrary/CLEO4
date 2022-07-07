@@ -1,5 +1,8 @@
 #include "stdafx.h"
 #include "CSoundSystem.h"
+
+#include <regex>
+
 #include "bass.h"
 #include "CDebug.h"
 #include "cleo.h"
@@ -133,18 +136,54 @@ namespace CLEO
 
     CAudioStream *CSoundSystem::LoadStream(const char *filename, bool in3d)
     {
-        CAudioStream *result = in3d ? new C3DAudioStream(filename) : new CAudioStream(filename);
+        static const std::regex URL_REGEX(R"(https?://(www.)?[-a-zA-Z0-9@:%._+~#=]{2,256}.[a-z]{2,4}([-a-zA-Z0-9@:%_+.~#?&//=]*))");
+
+        CAudioStream* result = nullptr;
+        if (std::regex_match(filename, URL_REGEX)) {
+           result = in3d ? new C3DAudioStream(filename) : new CAudioStream(filename);
+        } else {
+            //try find in cache or add to cache
+            auto cacheIterator = cachedAudioFiles.find(filename);
+            if (cacheIterator == cachedAudioFiles.end()) {
+                const auto result = cachedAudioFiles.emplace(filename, std::make_pair(0, ReadFileToBytes(filename)));
+                if (!result.second) {
+                    TRACE("Loading audio file %s failed.", filename);
+                    return nullptr;
+                }
+                cacheIterator = result.first;
+            }
+            const std::vector<BYTE>* fileBytes = &cacheIterator->second.second;
+            cacheIterator->second.first++;
+
+            result = in3d ? new C3DAudioStream(fileBytes, filename) : new CAudioStream(fileBytes, filename);
+
+            if (!result->OK)
+                cacheIterator->second.first--;
+
+            if (cacheIterator->second.first == 0)
+                cachedAudioFiles.erase(cacheIterator->first);
+        }
+
+        
         if (result->OK)
         {
             streams.insert(result);
             return result;
         }
+
+
         delete result;
         return nullptr;
     }
 
     void CSoundSystem::UnloadStream(CAudioStream *stream)
     {
+        if (!stream->audioFile.empty() && cachedAudioFiles.find(stream->audioFile) != cachedAudioFiles.end()) {
+	        auto &pair = cachedAudioFiles.at(stream->audioFile);
+            pair.first--;
+            if (pair.first == 0)
+                cachedAudioFiles.erase(stream->audioFile);
+        }
         if (streams.erase(stream))
             delete stream;
         else
@@ -158,6 +197,7 @@ namespace CLEO
             delete stream;
         });
         streams.clear();
+        cachedAudioFiles.clear();
     }
 
     void CSoundSystem::ResumeStreams()
@@ -223,15 +263,29 @@ namespace CLEO
     {
     }
 
+    unsigned CAudioStream::calculateAudioStreamFlags() {
+	    unsigned flags = BASS_SAMPLE_SOFTWARE;
+	    if (GetInstance().SoundSystem.bUseFPAudio)
+		    flags |= BASS_SAMPLE_FLOAT;
+        return flags; 
+    }
+
     CAudioStream::CAudioStream(const char *src) : state(no), OK(false)
     {
-        unsigned flags = BASS_SAMPLE_SOFTWARE;
-        if (GetInstance().SoundSystem.bUseFPAudio)
-            flags |= BASS_SAMPLE_FLOAT;
-        if (!(streamInternal = BASS_StreamCreateFile(FALSE, src, 0, 0, flags)) &&
-            !(streamInternal = BASS_StreamCreateURL(src, 0, flags, 0, nullptr)))
+	    const unsigned flags = calculateAudioStreamFlags();
+        if (!(streamInternal = BASS_StreamCreateURL(src, 0, flags, 0, nullptr)))
         {
             TRACE("Loading audiostream %s failed. Error code: %d", src, BASS_ErrorGetCode());
+        }
+        else OK = true;
+    }
+
+    CAudioStream::CAudioStream(const std::vector<BYTE>* fileBytes, const char* filename) : state(no), OK(false)
+	{
+		const unsigned flags = calculateAudioStreamFlags();
+        if (!(streamInternal = BASS_StreamCreateFile(TRUE, fileBytes->data(), 0, fileBytes->size(), flags)))
+        {
+            TRACE("Loading audiostream %s failed. Error code: %d", filename, BASS_ErrorGetCode());
         }
         else OK = true;
     }
@@ -241,19 +295,40 @@ namespace CLEO
         if (streamInternal) BASS_StreamFree(streamInternal);
     }
 
-    C3DAudioStream::C3DAudioStream(const char *src) : CAudioStream(), link(nullptr)
-    {
-        unsigned flags = BASS_SAMPLE_3D | BASS_SAMPLE_MONO | BASS_SAMPLE_SOFTWARE;
-        if (GetInstance().SoundSystem.bUseFPAudio)
-            flags |= BASS_SAMPLE_FLOAT;
-        if (!(streamInternal = BASS_StreamCreateFile(FALSE, src, 0, 0, flags)) &&
-            !(streamInternal = BASS_StreamCreateURL(src, 0, flags, nullptr, nullptr)))
+
+    unsigned C3DAudioStream::calculate3dAudioStreamFlags() {
+	    unsigned flags = calculateAudioStreamFlags() | BASS_SAMPLE_3D | BASS_SAMPLE_MONO;
+        return flags;
+    }
+
+    void C3DAudioStream::set3dAttributes() {
+	    BASS_ChannelSet3DAttributes(streamInternal, 0, -1.0, -1.0, -1, -1, -1.0);
+    }
+
+    C3DAudioStream::C3DAudioStream(const char* src): CAudioStream(), link(nullptr)
+	{
+		const unsigned flags = calculate3dAudioStreamFlags();
+		if (!(streamInternal = BASS_StreamCreateURL(src, 0, flags, nullptr, nullptr)))
         {
             TRACE("Loading 3d-audiostream %s failed. Error code: %d", src, BASS_ErrorGetCode());
         }
         else
         {
-            BASS_ChannelSet3DAttributes(streamInternal, 0, -1.0, -1.0, -1, -1, -1.0);
+            set3dAttributes();
+            OK = true;
+        }
+    }
+
+    C3DAudioStream::C3DAudioStream(const std::vector<BYTE>* fileBytes, const char* filename) : CAudioStream(), link(nullptr)
+    {
+	    const unsigned flags = calculate3dAudioStreamFlags();
+        if (!(streamInternal = BASS_StreamCreateFile(TRUE, fileBytes->data(), 0, fileBytes->size(), flags)))
+        {
+            TRACE("Loading 3d-audiostream %s failed. Error code: %d", filename, BASS_ErrorGetCode());
+        }
+        else
+        {
+            set3dAttributes();
             OK = true;
         }
     }

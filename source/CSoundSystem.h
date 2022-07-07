@@ -1,5 +1,8 @@
 #pragma once
 #include "stdafx.h"
+
+#include <map>
+
 #include "CCodeInjector.h"
 #include <set>
 #include "bass.h"
@@ -21,6 +24,7 @@ namespace CLEO
         bool paused;
         bool bUseFPAudio;
         HWND hwnd;
+        std::map<std::string, std::pair<unsigned int, std::vector<byte>>> cachedAudioFiles;
 
     public:
         virtual void Inject(CCodeInjector& inj);
@@ -70,10 +74,14 @@ namespace CLEO
             stopped,
         } state;
         bool OK;
+        std::string audioFile;
+
         CAudioStream();
+        static unsigned calculateAudioStreamFlags();
 
     public:
         CAudioStream(const char *src);
+        CAudioStream(const std::vector<BYTE>* fileBytes, const char* filename);
         virtual ~CAudioStream();
 
         // actions on streams
@@ -103,8 +111,12 @@ namespace CLEO
     protected:
         CPlaceable	*	link;
         BASS_3DVECTOR	position;
+
+        static unsigned calculate3dAudioStreamFlags();
+        void set3dAttributes();
     public:
         C3DAudioStream(const char *src);
+        C3DAudioStream(const std::vector<BYTE>* fileBytes, const char* filename);
         virtual ~C3DAudioStream();
 
         // overloaded actions
