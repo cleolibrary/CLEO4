@@ -6,8 +6,8 @@
 
 #include <wtypes.h>
 
-#define CLEO_VERSION 0x04040100
-#define CLEO_VERSIONTEXT "4.4.1"
+#define CLEO_VERSION 0x04040200
+#define CLEO_VERSIONTEXT "4.4.2"
 
 //result of CLEO_GetGameVersion()
 #define GV_US10 0	//1.0 us

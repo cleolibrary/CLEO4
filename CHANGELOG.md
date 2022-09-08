@@ -1,3 +1,7 @@
+## 4.4.2
+
+- fix eventual crash when using the game's user track player radio station (see https://github.com/cleolibrary/CLEO4/issues/38 for details).
+
 ## 4.4.1
 
 - fix some issues with audio stream output #61 (by @GeTechG)

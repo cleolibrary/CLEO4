@@ -567,30 +567,15 @@ namespace CLEO
             }
         }
     }
-    char StoredDir[MAX_PATH];
-    void CCustomScript::StoreScriptCustoms()
-    {
-        static char tempDir[MAX_PATH];
-        _getcwd(tempDir, sizeof(tempDir));
-        working_path = tempDir;
-        _chdir(StoredDir);
-    }
-    void CCustomScript::RestoreScriptCustoms()
-    {
-        _getcwd(StoredDir, sizeof(StoredDir));
-        _chdir(working_path.c_str());
-    }
     void CCustomScript::StoreScriptSpecifics()
     {
         StoreScriptDraws();
         StoreScriptTextures();
-        StoreScriptCustoms();
     }
     void CCustomScript::RestoreScriptSpecifics()
     {
         RestoreScriptDraws();
         RestoreScriptTextures();
-        RestoreScriptCustoms();
     }
 
     void CScriptEngine::Inject(CCodeInjector& inj)

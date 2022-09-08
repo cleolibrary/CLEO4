@@ -25,7 +25,6 @@ namespace CLEO
         int NumTexts;
 		CCustomScript *parentThread;
 		std::list<CCustomScript*> childThreads;
-        std::string working_path;
         std::list<RwTexture*> script_textures;
         std::vector<BYTE> script_draws;
         std::vector<BYTE> script_texts;
