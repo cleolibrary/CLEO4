@@ -1,6 +1,7 @@
 ## 4.4.2
 
-- fix eventual crash when using the game's user track player radio station (see https://github.com/cleolibrary/CLEO4/issues/38 for details).
+- fix eventual crash when using the game's user track player radio station (see https://github.com/cleolibrary/CLEO4/issues/38 for details)
+- fix 0AAA opcode not working with scripts from main.scm
 
 ## 4.4.1
 

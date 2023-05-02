@@ -41,8 +41,8 @@ union SCRIPT_VAR
 class CRunningScript
 {
 protected:
-    CRunningScript *Previous;			// +0x0
-    CRunningScript *Next;				// +0x4
+    CRunningScript *Next;			// +0x0
+    CRunningScript *Previous;				// +0x4
     char Name[8];						// +0x8
     void *BaseIP;						// +0x10
     BYTE *CurrentIP;					// +0x14
