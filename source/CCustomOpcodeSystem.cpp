@@ -812,6 +812,7 @@ namespace CLEO {
 		SCRIPT_VAR savedTls[32];
 		bool savedCondResult;
 		eLogicalOperation savedLogicalOp;
+		bool savedNotFlag;
 		static const size_t store_size = 0x400;
 		static ScmFunction *Store[store_size];
 		static size_t allocationPlace;			// contains an index of last allocated object
@@ -845,6 +846,7 @@ namespace CLEO {
 			std::copy(scope, scope + 32, savedTls);
 			savedCondResult = cs->bCondResult;
 			savedLogicalOp = cs->LogicalOp;
+			savedNotFlag = cs->NotFlag;
 
 			// initialize new scope
 			SCRIPT_VAR fill_val; fill_val.dwParam = 0;
@@ -855,6 +857,7 @@ namespace CLEO {
 
 			cs->bCondResult = false;
 			cs->LogicalOp = eLogicalOperation::NONE;
+			cs->NotFlag = false;
 
 			cs->SetScmFunction(thisScmFunctionId = allocationPlace);
 		}
@@ -866,19 +869,22 @@ namespace CLEO {
 			std::copy(savedTls, savedTls + 32, cs->IsMission() ? missionLocals : cs->LocalVar);
 
 			// process conditional result of just ended function in parent scope
+			bool condResult = cs->bCondResult;
+			if (savedNotFlag) condResult = !condResult;
+
 			if (savedLogicalOp >= eLogicalOperation::AND_2 && savedLogicalOp < eLogicalOperation::AND_END)
 			{
-				cs->bCondResult = savedCondResult && cs->bCondResult;
+				cs->bCondResult = savedCondResult && condResult;
 				cs->LogicalOp = --savedLogicalOp;
 			}
 			else if(savedLogicalOp >= eLogicalOperation::OR_2 && savedLogicalOp < eLogicalOperation::OR_END)
 			{
-				cs->bCondResult = savedCondResult || cs->bCondResult;
+				cs->bCondResult = savedCondResult || condResult;
 				cs->LogicalOp = --savedLogicalOp;
 			}
 			else // eLogicalOperation::NONE
 			{
-				// bCondResult already contains ened scope's result
+				cs->bCondResult = condResult;
 				cs->LogicalOp = savedLogicalOp;
 			}
 
