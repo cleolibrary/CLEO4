@@ -810,6 +810,8 @@ namespace CLEO {
 		unsigned short prevScmFunctionId, thisScmFunctionId;
 		BYTE *retnAddress;
 		SCRIPT_VAR savedTls[32];
+		bool savedCondResult;
+		eLogicalOperation savedLogicalOp;
 		static const size_t store_size = 0x400;
 		static ScmFunction *Store[store_size];
 		static size_t allocationPlace;			// contains an index of last allocated object
@@ -838,22 +840,48 @@ namespace CLEO {
 		{
 			auto cs = reinterpret_cast<CCustomScript*>(thread);
 
+			// create snapshot of current scope
 			auto scope = cs->IsMission() ? missionLocals : cs->LocalVar;
 			std::copy(scope, scope + 32, savedTls);
+			savedCondResult = cs->bCondResult;
+			savedLogicalOp = cs->LogicalOp;
 
+			// initialize new scope
 			SCRIPT_VAR fill_val; fill_val.dwParam = 0;
 
 			// CLEO 3 didnt initialise local storage, so dont do it if we're processing a CLEO 3 script in case the storage is used
 			if (cs->IsCustom() && cs->GetCompatibility() >= CLEO_VER_4_MIN)
 				std::fill(scope, scope + 32, fill_val);	// fill with zeros
 
+			cs->bCondResult = false;
+			cs->LogicalOp = eLogicalOperation::NONE;
+
 			cs->SetScmFunction(thisScmFunctionId = allocationPlace);
 		}
 
 		void Return(CRunningScript *thread)
 		{
+			// restore parent scope's local variables
 			auto cs = reinterpret_cast<CCustomScript*>(thread);
 			std::copy(savedTls, savedTls + 32, cs->IsMission() ? missionLocals : cs->LocalVar);
+
+			// process conditional result of just ended function in parent scope
+			if (savedLogicalOp >= eLogicalOperation::AND_2 && savedLogicalOp < eLogicalOperation::AND_END)
+			{
+				cs->bCondResult = savedCondResult && cs->bCondResult;
+				cs->LogicalOp = --savedLogicalOp;
+			}
+			else if(savedLogicalOp >= eLogicalOperation::OR_2 && savedLogicalOp < eLogicalOperation::OR_END)
+			{
+				cs->bCondResult = savedCondResult || cs->bCondResult;
+				cs->LogicalOp = --savedLogicalOp;
+			}
+			else // eLogicalOperation::NONE
+			{
+				// bCondResult already contains ened scope's result
+				cs->LogicalOp = savedLogicalOp;
+			}
+
 			cs->SetIp(retnAddress);
 			cs->SetScmFunction(prevScmFunctionId);
 		}

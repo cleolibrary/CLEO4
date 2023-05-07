@@ -319,7 +319,7 @@ namespace CLEO
         unsigned timers[2];
         bool condResult;
         unsigned sleepTime;
-        unsigned short logicalOp;
+        eLogicalOperation logicalOp;
         bool notFlag;
         ptrdiff_t ip_diff;
         char threadName[8];

@@ -24,6 +24,36 @@ enum eDataType
     DT_LVAR_STRING_ARRAY
 };
 
+enum eLogicalOperation : WORD
+{
+    NONE = 0, // just replace
+
+    AND_2 = 1, // AND operation on results of next two conditional opcodes
+    AND_3,
+    AND_4,
+    AND_5,
+    AND_6,
+    AND_7,
+    AND_END,
+
+    OR_2 = 21, // OR operation on results of next two conditional opcodes
+    OR_3,
+    OR_4,
+    OR_5,
+    OR_6,
+    OR_7,
+    OR_END,
+};
+static eLogicalOperation& operator--(eLogicalOperation& o)
+{
+    if (o == eLogicalOperation::NONE) return o; // can not be decremented anymore
+    if (o == eLogicalOperation::OR_2) return o = eLogicalOperation::NONE;
+
+    auto val = static_cast<WORD>(o); // to number
+    val--;
+    return o = static_cast<eLogicalOperation>(val);
+}
+
 union SCRIPT_VAR
 {
     DWORD	dwParam;
@@ -57,7 +87,7 @@ protected:
     bool bTextBlockOverride;			// +0xC8
     BYTE bExternalType;					// +0xC9
     DWORD WakeTime;						// +0xCC
-    WORD LogicalOp;						// +0xD0
+    eLogicalOperation LogicalOp;		// +0xD0
     bool NotFlag;						// +0xD2
     bool bWastedBustedCheck;			// +0xD3
     bool bWastedOrBusted;				// +0xD4
@@ -250,7 +280,7 @@ public:
         bTextBlockOverride = 0;
         bExternalType = -1;
         memset(LocalVar, 0, sizeof(LocalVar));
-        LogicalOp = 0;
+        LogicalOp = eLogicalOperation::NONE;
         NotFlag = 0;
         bWastedOrBusted = 0;
         SceneSkipIP = 0;
