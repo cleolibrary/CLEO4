@@ -120,9 +120,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="CLEO Changes.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="source\CLEO4.rc">
       <Filter>source</Filter>
     </ResourceCompile>
