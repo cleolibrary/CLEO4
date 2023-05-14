@@ -2152,6 +2152,9 @@ namespace CLEO {
 			SetScriptCondResult(thread, fputs(readString(thread), file) > 0);
 			fflush(file);
 		}
+		else {
+			SetScriptCondResult(thread, false);
+		}
 		return OR_CONTINUE;
 	}
 
@@ -2198,6 +2201,7 @@ namespace CLEO {
 							 ExParams[24], ExParams[25], ExParams[26], ExParams[27], ExParams[28], ExParams[29],
 							 ExParams[30], ExParams[31], ExParams[32], ExParams[33], ExParams[34]);
 		}
+		SetScriptCondResult(thread, cExParams == *result);
 		return OR_CONTINUE;
 	}
 
