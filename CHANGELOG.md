@@ -1,3 +1,7 @@
+## 4.4.4
+
+- added string arguments support to 0AB1 (cleo_call)
+
 ## 4.4.3
 
 - added correct support of condition result to opcodes 0AB1 0AB2. Fixes possible bugs when 0AB1 are used in multi conditional if statements. 

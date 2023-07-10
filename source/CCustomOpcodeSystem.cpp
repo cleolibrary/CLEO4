@@ -810,6 +810,7 @@ namespace CLEO {
 		unsigned short prevScmFunctionId, thisScmFunctionId;
 		BYTE *retnAddress;
 		SCRIPT_VAR savedTls[32];
+		std::list<std::string> stringParams; // texts with this scope lifetime
 		bool savedCondResult;
 		eLogicalOperation savedLogicalOp;
 		bool savedNotFlag;
@@ -837,7 +838,7 @@ namespace CLEO {
 		}
 
 		ScmFunction(CRunningScript *thread) :
-			prevScmFunctionId(reinterpret_cast<CCustomScript*>(thread)->GetScmFunction()), retnAddress(thread->GetBytePointer())
+			prevScmFunctionId(reinterpret_cast<CCustomScript*>(thread)->GetScmFunction())
 		{
 			auto cs = reinterpret_cast<CCustomScript*>(thread);
 
@@ -847,13 +848,6 @@ namespace CLEO {
 			savedCondResult = cs->bCondResult;
 			savedLogicalOp = cs->LogicalOp;
 			savedNotFlag = cs->NotFlag;
-
-			// initialize new scope
-			SCRIPT_VAR fill_val; fill_val.dwParam = 0;
-
-			// CLEO 3 didnt initialise local storage, so dont do it if we're processing a CLEO 3 script in case the storage is used
-			if (cs->IsCustom() && cs->GetCompatibility() >= CLEO_VER_4_MIN)
-				std::fill(scope, scope + 32, fill_val);	// fill with zeros
 
 			cs->bCondResult = false;
 			cs->LogicalOp = eLogicalOperation::NONE;
@@ -1623,45 +1617,71 @@ namespace CLEO {
 
 		*thread >> label >> nParams;
 
-		static SCRIPT_VAR arguments[64];
-		SCRIPT_VAR* arguments_end = &arguments[nParams];
+		ScmFunction* scmFunc = new ScmFunction(thread);
+		
+		static SCRIPT_VAR arguments[32];
+		SCRIPT_VAR* locals = thread->IsMission() ? missionLocals : thread->GetVarPtr();
+		SCRIPT_VAR* localsEnd = locals + 32;
+		SCRIPT_VAR* storedLocals = scmFunc->savedTls;
 
-		if (nParams)
+		// collect arguments
+		for (DWORD i = 0; i < min(nParams, 32); i++)
 		{
-			for (SCRIPT_VAR *arg = arguments; arg != arguments_end; ++arg)
+			SCRIPT_VAR* arg = arguments + i;
+				
+			switch (*thread->GetBytePointer())
 			{
-				switch (*thread->GetBytePointer())
+			case DT_FLOAT:
+			case DT_DWORD:
+			case DT_WORD:
+			case DT_BYTE:
+			case DT_VAR:
+			case DT_LVAR:
+			case DT_VAR_ARRAY:
+			case DT_LVAR_ARRAY:
+				*thread >> arg->dwParam;
+				break;
+
+			case DT_VAR_STRING:
+			case DT_LVAR_STRING:
+			case DT_VAR_TEXTLABEL:
+			case DT_LVAR_TEXTLABEL:
+				arg->pParam = GetScriptParamPointer(thread);
+				if (arg->pParam >= locals && arg->pParam < localsEnd) // correct scoped variable's pointer
 				{
-				case DT_FLOAT:
-				case DT_DWORD:
-				case DT_WORD:
-				case DT_BYTE:
-				case DT_VAR:
-				case DT_LVAR:
-				case DT_VAR_ARRAY:
-				case DT_LVAR_ARRAY:
-					*thread >> arg->dwParam;
-					break;
-				case DT_VAR_STRING:
-				case DT_LVAR_STRING:
-				case DT_VAR_TEXTLABEL:
-				case DT_LVAR_TEXTLABEL:
-					arg->pParam = GetScriptParamPointer(thread);
-					break;
-				case DT_STRING:
-				case DT_TEXTLABEL:
-					arg->pcParam = readString(thread);
+					arg->dwParam -= (DWORD)locals;
+					arg->dwParam += (DWORD)storedLocals;
 				}
+				break;
+
+			case DT_STRING:
+			case DT_TEXTLABEL:
+			case DT_VARLEN_STRING:
+				scmFunc->stringParams.emplace_back(readString(thread)); // those texts exists in script code, but without terminator character. Copy is necessary
+				arg->pcParam = (char*)scmFunc->stringParams.back().c_str();
+				break;
 			}
 		}
 
-		//if(nParams) GetScriptParams(thread, nParams);
+		// skip unused args
+		if (nParams > 32) 
+			GetScriptParams(thread, nParams - 32);
 
-		new ScmFunction(thread);
+		// all areguments read
+		scmFunc->retnAddress = thread->GetBytePointer();
 
-		// pass arguments
-		if (nParams)
-			std::copy(arguments, arguments_end, thread->IsMission() ? missionLocals : thread->GetVarPtr());
+		// pass arguments as new scope local variables
+		memcpy(locals, arguments, nParams * sizeof(SCRIPT_VAR));
+
+		// initialize rest of new scope local variables
+		auto cs = reinterpret_cast<CCustomScript*>(thread);
+		if (cs->IsCustom() && cs->GetCompatibility() >= CLEO_VER_4_MIN) // CLEO 3 did not initialised local variables
+		{
+			for (DWORD i = nParams; i < 32; i++)
+			{
+				cs->SetIntVar(i, 0); // fill with zeros
+			}
+		}
 
 		// jump to label
 		ThreadJump(thread, label);
