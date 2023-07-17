@@ -20,7 +20,9 @@ namespace CLEO
     const char* (__fastcall * CText__Get)(CText*, int dummy, const char*);
     DWORD _CText__TKey__locate;
 
-    char message_buf[0x80];
+    char message_buf_big[7][0x80];
+    char message_buf_low[0x80];
+    char message_buf_high[0x80];
 
     const char * __fastcall CText__TKey__locate(CText__TKey *key, int dummy, const char *gxt, bool& found)
     {
@@ -48,20 +50,20 @@ namespace CLEO
 
     void PrintBig(const char *text, unsigned time, unsigned style)
     {
-        strcpy(message_buf, text);
-        _PrintBig(message_buf, time, style - 1);
+        strcpy(message_buf_big[style - 1], text);
+        _PrintBig(message_buf_big[style - 1], time, style - 1);
     }
 
     void Print(const char *text, unsigned time)
     {
-        strcpy(message_buf, text);
-        _Print(message_buf, time, false, false);
+        strcpy(message_buf_low, text);
+        _Print(message_buf_low, time, false, false);
     }
 
     void PrintNow(const char *text, unsigned time)
     {
-        strcpy(message_buf, text);
-        _PrintNow(message_buf, time, false, false);
+        strcpy(message_buf_high, text);
+        _PrintNow(message_buf_high, time, false, false);
     }
 
     bool TestCheat(const char* cheat)
