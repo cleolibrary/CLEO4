@@ -1,3 +1,7 @@
+## 4.4.5
+
+- added support of variable length arguments longer than 128 characters
+
 ## 4.4.4
 
 - added string arguments support to 0AB1 (cleo_call)
