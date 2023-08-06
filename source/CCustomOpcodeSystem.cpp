@@ -400,7 +400,7 @@ namespace CLEO {
 	// read string parameter according to convention on strings
 	char *readString(CRunningScript *thread, char* buf = nullptr, BYTE size = 0)
 	{
-		if (size == 0) size = 0xFF; // max
+		if (size == 0) size = MAX_STR_LEN;
 
 		auto paramType = *thread->GetBytePointer();
 		if (!paramType) return nullptr;
@@ -419,13 +419,12 @@ namespace CLEO {
 		}
 		else // process as scm string
 		{
-			// no custom buffer provided
+			// no user output buffer provided
 			if (buf == nullptr)
 			{
-				static char result[0xFF + 1]; // and extra terminator character
-				result[0xFF] = '\0';
+				static char result[MAX_STR_LEN];
 				buf = result;
-				size = 0xFF;
+				size = sizeof(result);
 			}
 
 			std::fill(buf, buf + size, '\0');
@@ -1296,7 +1295,7 @@ namespace CLEO {
 	//0AA5=-1,call %1d% num_params %2h% pop %3h%
 	OpcodeResult __stdcall opcode_0AA5(CRunningScript *thread)
 	{
-		static char textParams[5][0xFF]; unsigned currTextParam = 0;
+		static char textParams[5][MAX_STR_LEN]; unsigned currTextParam = 0;
 		static SCRIPT_VAR arguments[50] = { 0 };
 		void(*func)();
 		DWORD numParams;
@@ -1329,7 +1328,7 @@ namespace CLEO {
 				break;
 			case DT_VARLEN_STRING:
 			case DT_TEXTLABEL:
-				(*arg).pcParam = readString(thread, textParams[currTextParam++], 0xFF);
+				(*arg).pcParam = readString(thread, textParams[currTextParam++], MAX_STR_LEN);
 			}
 		}
 
@@ -1355,7 +1354,7 @@ namespace CLEO {
 	//0AA6=-1,call_method %1d% struct %2d% num_params %3h% pop %4h%
 	OpcodeResult __stdcall opcode_0AA6(CRunningScript *thread)
 	{
-		static char textParams[5][0xFF]; unsigned currTextParam = 0;
+		static char textParams[5][MAX_STR_LEN]; unsigned currTextParam = 0;
 		static SCRIPT_VAR arguments[50] = { 0 };
 		void(*func)();
 		void *struc;
@@ -1389,7 +1388,7 @@ namespace CLEO {
 				break;
 			case DT_VARLEN_STRING:
 			case DT_TEXTLABEL:
-				arg->pcParam = readString(thread, textParams[currTextParam++], 0xFF);
+				arg->pcParam = readString(thread, textParams[currTextParam++], MAX_STR_LEN);
 			}
 		}
 
@@ -1415,7 +1414,7 @@ namespace CLEO {
 	//0AA7=-1,call_function %1d% num_params %2h% pop %3h%
 	OpcodeResult __stdcall opcode_0AA7(CRunningScript *thread)
 	{
-		static char textParams[5][0xFF];
+		static char textParams[5][MAX_STR_LEN];
 		static SCRIPT_VAR arguments[50] = { 0 };
 		DWORD currTextParam = 0;
 		void(*func)();
@@ -1448,7 +1447,7 @@ namespace CLEO {
 				break;
 			case DT_VARLEN_STRING:
 			case DT_TEXTLABEL:
-				arg->pcParam = readString(thread, textParams[currTextParam++], 0xFF);
+				arg->pcParam = readString(thread, textParams[currTextParam++], MAX_STR_LEN);
 				break;
 			}
 		}
@@ -1478,7 +1477,7 @@ namespace CLEO {
 	//0AA8=-1,call_function_method %1d% struct %2d% num_params %3h% pop %4h%
 	OpcodeResult __stdcall opcode_0AA8(CRunningScript *thread)
 	{
-		static char textParams[5][0xFF];
+		static char textParams[5][MAX_STR_LEN];
 		static SCRIPT_VAR arguments[50] = { 0 };
 		DWORD currTextParam = 0;
 		void(*func)();
@@ -1513,7 +1512,7 @@ namespace CLEO {
 				break;
 			case DT_VARLEN_STRING:
 			case DT_TEXTLABEL:
-				arg->pcParam = readString(thread, textParams[currTextParam++], 0xFF);
+				arg->pcParam = readString(thread, textParams[currTextParam++], MAX_STR_LEN);
 			}
 		}
 
@@ -2024,8 +2023,8 @@ namespace CLEO {
 	//0ACE=-1,show_formatted_text_box %1d%
 	OpcodeResult __stdcall opcode_0ACE(CRunningScript *thread)
 	{
-		char fmt[0xFF];
-		char text[0xFF];
+		char fmt[MAX_STR_LEN];
+		char text[MAX_STR_LEN];
 		readString(thread, fmt, sizeof(fmt));
 		format(thread, text, sizeof(text), fmt);
 		PrintHelp(text);
@@ -2036,7 +2035,7 @@ namespace CLEO {
 	//0ACF=-1,show_formatted_styled_text %1d% time %2d% style %3d%
 	OpcodeResult __stdcall opcode_0ACF(CRunningScript *thread)
 	{
-		char fmt[0xFF]; char text[0xFF];
+		char fmt[MAX_STR_LEN]; char text[MAX_STR_LEN];
 		DWORD time, style;
 		readString(thread, fmt, sizeof(fmt));
 		*thread >> time >> style;
@@ -2049,7 +2048,7 @@ namespace CLEO {
 	//0AD0=-1,show_formatted_text_lowpriority %1d% time %2d%
 	OpcodeResult __stdcall opcode_0AD0(CRunningScript *thread)
 	{
-		char fmt[0xFF]; char text[0xFF];
+		char fmt[MAX_STR_LEN]; char text[MAX_STR_LEN];
 		DWORD time;
 		readString(thread, fmt, sizeof(fmt));
 		*thread >> time;
@@ -2062,7 +2061,7 @@ namespace CLEO {
 	//0AD1=-1,show_formatted_text_highpriority %1d% time %2d%
 	OpcodeResult __stdcall opcode_0AD1(CRunningScript *thread)
 	{
-		char fmt[0xFF]; char text[0xFF];
+		char fmt[MAX_STR_LEN]; char text[MAX_STR_LEN];
 		DWORD time;
 		readString(thread, fmt, sizeof(fmt));
 		*thread >> time;
@@ -2096,7 +2095,7 @@ namespace CLEO {
 	//0AD3=-1,string %1d% format %2d% ...
 	OpcodeResult __stdcall opcode_0AD3(CRunningScript *thread)
 	{
-		char fmt[0xFF], *dst;
+		char fmt[MAX_STR_LEN], *dst;
 
 		if (*thread->GetBytePointer() >= 1 && *thread->GetBytePointer() <= 8) *thread >> dst;
 		else dst = &GetScriptParamPointer(thread)->cParam;
@@ -2110,7 +2109,7 @@ namespace CLEO {
 	//0AD4=-1,%3d% = scan_string %1d% format %2d%  //IF and SET
 	OpcodeResult __stdcall opcode_0AD4(CRunningScript *thread)
 	{
-		char fmt[0xFF], *format, *src;
+		char fmt[MAX_STR_LEN], *format, *src;
 		src = readString(thread);
 		format = readString(thread, fmt, sizeof(fmt));
 
@@ -2199,7 +2198,7 @@ namespace CLEO {
 	//0AD9=-1,write_formated_text %2d% to_file %1d%
 	OpcodeResult __stdcall opcode_0AD9(CRunningScript *thread)
 	{
-		char fmt[0xFF]; char text[0xFF];
+		char fmt[MAX_STR_LEN]; char text[MAX_STR_LEN];
 		DWORD hFile;
 		*thread >> hFile;
 		readString(thread, fmt, sizeof(fmt));
@@ -2709,9 +2708,9 @@ extern "C"
 
 	LPSTR WINAPI CLEO_ReadStringOpcodeParam(CRunningScript* thread, char *buf, int size)
 	{
-		static char internal_buf[0xFF];
-		if (!buf) { buf = internal_buf; size = 0xFF; }
-		if (!size) size = 0xFF;
+		static char internal_buf[MAX_STR_LEN];
+		if (!buf) { buf = internal_buf; size = MAX_STR_LEN; }
+		if (!size) size = MAX_STR_LEN;
 		std::fill(buf, buf + size, '\0');
 		GetScriptStringParam(thread, buf, size);
 		return buf;
@@ -2719,9 +2718,9 @@ extern "C"
 
 	LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CRunningScript* thread, char *buf, int size)
 	{
-		static char internal_buf[0xFF];
-		if (!buf) { buf = internal_buf; size = 0xFF; }
-		if (!size) size = 0xFF;
+		static char internal_buf[MAX_STR_LEN];
+		if (!buf) { buf = internal_buf; size = MAX_STR_LEN; }
+		if (!size) size = MAX_STR_LEN;
 		std::fill(buf, buf + size, '\0');
 		return readString(thread, buf, size);
 	}
