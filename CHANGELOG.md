@@ -1,12 +1,9 @@
-## 4.4.5
-
-- added support of variable length arguments longer than 128 characters
-
 ## 4.4.4
 
 - added string arguments support to 0AB1 (cleo_call)
 - fix an issue when PRINT_STRING and PRINT_BIG_STRING would overwrite each other (see https://github.com/cleolibrary/CLEO4/issues/80)
 - update BASS.dll to the latest to solve some issues with audio in game (see https://github.com/cleolibrary/CLEO4/issues/70)
+- added support of variable length arguments longer than 128 characters
 
 ## 4.4.3
 

@@ -2302,7 +2302,7 @@ namespace CLEO {
 	//0ADF=2,add_dynamic_GXT_entry %1d% text %2d%
 	OpcodeResult __stdcall opcode_0ADF(CRunningScript *thread)
 	{
-		char gxtLabel[8 + 1]; // and terminator character
+		char gxtLabel[8]; // 7 + terminator character
 		readString(thread, gxtLabel, sizeof(gxtLabel));
 
 		char *text = readString(thread);
