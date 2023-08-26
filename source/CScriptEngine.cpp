@@ -220,7 +220,7 @@ namespace CLEO
         }
         else
         {
-            if (!pScript->IsMission()) *MissionLoaded = false;
+            if (pScript->IsMission()) *MissionLoaded = false;
             RemoveScriptFromQueue(pScript, activeThreadQueue);
             AddScriptToQueue(pScript, inactiveThreadQueue);
             StopScript(pScript);
