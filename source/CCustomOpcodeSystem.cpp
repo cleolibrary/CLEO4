@@ -1210,9 +1210,11 @@ namespace CLEO {
 	{
 		DWORD hFile;
 		DWORD size;
-		void *buf;
 		*thread >> hFile >> size;
-		buf = GetScriptParamPointer(thread);
+
+		SCRIPT_VAR* buf = GetScriptParamPointer(thread);
+		buf->dwParam = 0; // https://github.com/cleolibrary/CLEO4/issues/91
+
 		if (convert_handle_to_file(hFile)) read_file(buf, size, 1, hFile);
 		return OR_CONTINUE;
 	}
