@@ -1713,7 +1713,7 @@ namespace CLEO {
 	{
 		ScmFunction *scmFunc = ScmFunction::Store[reinterpret_cast<CCustomScript*>(thread)->GetScmFunction()];
 		
-		DWORD nRetParams;
+		DWORD nRetParams = 0;
 		if (*thread->GetBytePointer()) *thread >> nRetParams;
 
 		if (nRetParams) GetScriptParams(thread, nRetParams);
