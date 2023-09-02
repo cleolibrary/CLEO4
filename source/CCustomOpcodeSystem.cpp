@@ -1712,8 +1712,10 @@ namespace CLEO {
 	OpcodeResult __stdcall opcode_0AB2(CRunningScript *thread)
 	{
 		ScmFunction *scmFunc = ScmFunction::Store[reinterpret_cast<CCustomScript*>(thread)->GetScmFunction()];
+		
 		DWORD nRetParams;
-		*thread >> nRetParams;
+		if (*thread->GetBytePointer()) *thread >> nRetParams;
+
 		if (nRetParams) GetScriptParams(thread, nRetParams);
 		scmFunc->Return(thread);
 		if (nRetParams) SetScriptParams(thread, nRetParams);
