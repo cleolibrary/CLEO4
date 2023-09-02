@@ -212,18 +212,7 @@ public:
 		char *strptr;
 		BOOL result;
 
-		switch (CLEO_GetOperandType(thread))
-		{
-		case globalVarVString:
-		case localVarVString:
-		case globalVarSString:
-		case localVarSString:
-			CLEO_ReadStringPointerOpcodeParam(thread, strValue, sizeof(strValue));
-			break;
-		default:
-			strptr = (char *)CLEO_GetIntOpcodeParam(thread);
-			strcpy(strValue, strptr);
-		}
+		CLEO_ReadStringPointerOpcodeParam(thread, strValue, sizeof(strValue));
 		CLEO_ReadStringPointerOpcodeParam(thread, path, sizeof(path));
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
