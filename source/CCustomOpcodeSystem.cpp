@@ -234,7 +234,7 @@ namespace CLEO {
 		}
 		catch (const char * e)
 		{
-			char str[128];
+			char str[MAX_STR_LEN];
 			sprintf(str, "%s encountered while parsing opcode '%04X' in script '%s'", e, last_opcode, last_thread);
 			Error(str);
 		}
