@@ -1632,9 +1632,10 @@ namespace CLEO {
 	OpcodeResult __stdcall opcode_0AB1(CRunningScript *thread)
 	{
 		int		label;
-		DWORD	nParams;
+		*thread >> label;
 
-		*thread >> label >> nParams;
+		DWORD nParams = 0;
+		if(*thread->GetBytePointer()) *thread >> nParams;
 
 		ScmFunction* scmFunc = new ScmFunction(thread);
 		
