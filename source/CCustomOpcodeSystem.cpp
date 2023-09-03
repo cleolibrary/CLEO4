@@ -826,6 +826,8 @@ namespace CLEO {
 	{
 		unsigned short prevScmFunctionId, thisScmFunctionId;
 		BYTE *retnAddress;
+		BYTE* savedStack[8]; // gosub stack
+		WORD savedSP;
 		SCRIPT_VAR savedTls[32];
 		std::list<std::string> stringParams; // texts with this scope lifetime
 		bool savedCondResult;
@@ -860,12 +862,19 @@ namespace CLEO {
 			auto cs = reinterpret_cast<CCustomScript*>(thread);
 
 			// create snapshot of current scope
+			std::copy(std::begin(cs->Stack), std::end(cs->Stack), std::begin(savedStack));
+			savedSP = cs->SP;
+
 			auto scope = cs->IsMission() ? missionLocals : cs->LocalVar;
 			std::copy(scope, scope + 32, savedTls);
+
 			savedCondResult = cs->bCondResult;
 			savedLogicalOp = cs->LogicalOp;
 			savedNotFlag = cs->NotFlag;
 
+			// init new scope
+			std::fill(std::begin(cs->Stack), std::end(cs->Stack), nullptr);
+			cs->SP = 0;
 			cs->bCondResult = false;
 			cs->LogicalOp = eLogicalOperation::NONE;
 			cs->NotFlag = false;
@@ -875,8 +884,13 @@ namespace CLEO {
 
 		void Return(CRunningScript *thread)
 		{
-			// restore parent scope's local variables
 			auto cs = reinterpret_cast<CCustomScript*>(thread);
+
+			// restore parent scope's gosub call stack
+			std::copy(std::begin(savedStack), std::end(savedStack), std::begin(cs->Stack));
+			cs->SP = savedSP;
+			
+			// restore parent scope's local variables
 			std::copy(savedTls, savedTls + 32, cs->IsMission() ? missionLocals : cs->LocalVar);
 
 			// process conditional result of just ended function in parent scope
