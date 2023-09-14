@@ -1,3 +1,7 @@
+## 4.4.5
+
+- Added opcode 0DD5 (get_platform).
+
 ## 4.4.4
 
 - added string arguments support to 0AB1 (cleo_call)

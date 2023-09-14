@@ -15,6 +15,21 @@ namespace CLEO
         GV_UNK = -1
     };
 
+    // returned by 0DD5: get_platform opcode
+    enum ePlatform
+    {
+        PLATFORM_NONE,
+        PLATFORM_ANDROID,
+        PLATFORM_PSP,
+        PLATFORM_IOS,
+        PLATFORM_FOS,
+        PLATFORM_XBOX,
+        PLATFORM_PS2,
+        PLATFORM_PS3,
+        PLATFORM_MAC,
+        PLATFORM_WINDOWS
+    };
+
     // determines the list of memory adresses, that can be translated 
     // considering to game version
     enum eMemoryAddress

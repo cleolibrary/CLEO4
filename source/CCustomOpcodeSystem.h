@@ -1,6 +1,7 @@
 #pragma once
 #include "CCodeInjector.h"
 #include "CDebug.h"
+#include "CSoundSystem.h"
 #include <direct.h>
 #include <set>
 
@@ -75,4 +76,28 @@ namespace CLEO
     };
 
     extern void(__thiscall * ProcessScript)(CRunningScript*);
+
+    // Exports
+    extern "C"
+    {
+        // Define external symbols with MSVC decorating schemes
+        BOOL WINAPI CLEO_RegisterOpcode(WORD opcode, CustomOpcodeHandler callback);
+        DWORD WINAPI CLEO_GetIntOpcodeParam(CRunningScript* thread);
+        float WINAPI CLEO_GetFloatOpcodeParam(CRunningScript* thread);
+        void WINAPI CLEO_SetIntOpcodeParam(CRunningScript* thread, DWORD value);
+        void WINAPI CLEO_SetFloatOpcodeParam(CRunningScript* thread, float value);
+        LPSTR WINAPI CLEO_ReadStringOpcodeParam(CRunningScript* thread, char* buf, int size);
+        LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CRunningScript* thread, char* buf, int size);
+        void WINAPI CLEO_WriteStringOpcodeParam(CRunningScript* thread, LPCSTR str);
+        void WINAPI CLEO_SetThreadCondResult(CRunningScript* thread, BOOL result);
+        void WINAPI CLEO_SkipOpcodeParams(CRunningScript* thread, int count);
+        void WINAPI CLEO_ThreadJumpAtLabelPtr(CRunningScript* thread, int labelPtr);
+        int WINAPI CLEO_GetOperandType(CRunningScript* thread);
+        void WINAPI CLEO_RetrieveOpcodeParams(CRunningScript* thread, int count);
+        void WINAPI CLEO_RecordOpcodeParams(CRunningScript* thread, int count);
+        SCRIPT_VAR* WINAPI CLEO_GetPointerToScriptVariable(CRunningScript* thread);
+        RwTexture* WINAPI CLEO_GetScriptTextureById(CRunningScript* thread, int id);
+        HSTREAM WINAPI CLEO_GetInternalAudioStream(CRunningScript* thread, CAudioStream* stream);
+        CRunningScript* WINAPI CLEO_CreateCustomScript(CRunningScript* fromThread, const char* fileName, int label);
+    }
 }
