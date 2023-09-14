@@ -234,7 +234,7 @@ namespace CLEO {
 		}
 		catch (const char * e)
 		{
-			char str[128];
+			char str[MAX_STR_LEN];
 			sprintf(str, "%s encountered while parsing opcode '%04X' in script '%s'", e, last_opcode, last_thread);
 			Error(str);
 		}
@@ -1646,9 +1646,10 @@ namespace CLEO {
 	OpcodeResult __stdcall opcode_0AB1(CRunningScript *thread)
 	{
 		int		label;
-		DWORD	nParams;
+		*thread >> label;
 
-		*thread >> label >> nParams;
+		DWORD nParams = 0;
+		if(*thread->GetBytePointer()) *thread >> nParams;
 
 		ScmFunction* scmFunc = new ScmFunction(thread);
 		
@@ -1725,8 +1726,10 @@ namespace CLEO {
 	OpcodeResult __stdcall opcode_0AB2(CRunningScript *thread)
 	{
 		ScmFunction *scmFunc = ScmFunction::Store[reinterpret_cast<CCustomScript*>(thread)->GetScmFunction()];
-		DWORD nRetParams;
-		*thread >> nRetParams;
+		
+		DWORD nRetParams = 0;
+		if (*thread->GetBytePointer()) *thread >> nRetParams;
+
 		if (nRetParams) GetScriptParams(thread, nRetParams);
 		scmFunc->Return(thread);
 		if (nRetParams) SetScriptParams(thread, nRetParams);

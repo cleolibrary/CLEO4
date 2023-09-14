@@ -20,9 +20,9 @@ namespace CLEO
     const char* (__fastcall * CText__Get)(CText*, int dummy, const char*);
     DWORD _CText__TKey__locate;
 
-    char message_buf_big[7][0x80];
-    char message_buf_low[0x80];
-    char message_buf_high[0x80];
+    char message_buf_big[7][MAX_STR_LEN];
+    char message_buf_low[MAX_STR_LEN];
+    char message_buf_high[MAX_STR_LEN];
 
     const char * __fastcall CText__TKey__locate(CText__TKey *key, int dummy, const char *gxt, bool& found)
     {
