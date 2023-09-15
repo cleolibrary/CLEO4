@@ -54,6 +54,9 @@
     <ClCompile Include="source\PluginSdkExternals.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\CModuleSystem.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\CCodeInjector.h">
@@ -111,6 +114,9 @@
       <Filter>cleo_sdk</Filter>
     </ClInclude>
     <ClInclude Include="source\resource.h">
+      <Filter>source</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CModuleSystem.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>

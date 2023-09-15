@@ -6,6 +6,7 @@
 #include "CDebug.h"
 #include "CDmaFix.h"
 #include "CGameMenu.h"
+#include "CModulesSystem.h"
 #include "CPluginSystem.h"
 #include "CScriptEngine.h"
 #include "CCustomOpcodeSystem.h"
@@ -37,6 +38,8 @@ namespace CLEO
         void Start()
         {
             CreateDirectory("cleo", NULL);
+            CreateDirectory("cleo/cleo_modules", NULL);
+            CreateDirectory("cleo/cleo_plugins", NULL);
             CreateDirectory("cleo/cleo_saves", NULL);
             CreateDirectory("cleo/cleo_text", NULL);
             CodeInjector.OpenReadWriteAccess();		// must do this earlier to ensure plugins write access on init
@@ -60,9 +63,10 @@ namespace CLEO
         CCodeInjector			CodeInjector;
         CGameVersionManager		VersionManager;
         CScriptEngine			ScriptEngine;
-        CTextManager				TextManager;
+        CTextManager			TextManager;
         CCustomOpcodeSystem		OpcodeSystem;
-        CSoundSystem				SoundSystem;
+        CModuleSystem           ModuleSystem;
+        CSoundSystem			SoundSystem;
         CPluginSystem			PluginSystem;
         //CLegacy					Legacy;
     };
