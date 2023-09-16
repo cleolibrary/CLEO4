@@ -829,6 +829,7 @@ namespace CLEO {
 	struct ScmFunction
 	{
 		unsigned short prevScmFunctionId, thisScmFunctionId;
+		void* savedBaseIP;
 		BYTE *retnAddress;
 		BYTE* savedStack[8]; // gosub stack
 		WORD savedSP;
@@ -866,6 +867,7 @@ namespace CLEO {
 			auto cs = reinterpret_cast<CCustomScript*>(thread);
 
 			// create snapshot of current scope
+			savedBaseIP = cs->BaseIP;
 			std::copy(std::begin(cs->Stack), std::end(cs->Stack), std::begin(savedStack));
 			savedSP = cs->SP;
 
@@ -891,6 +893,7 @@ namespace CLEO {
 			auto cs = reinterpret_cast<CCustomScript*>(thread);
 
 			// restore parent scope's gosub call stack
+			cs->BaseIP = savedBaseIP;
 			std::copy(std::begin(savedStack), std::end(savedStack), std::begin(cs->Stack));
 			cs->SP = savedSP;
 			
@@ -1649,8 +1652,74 @@ namespace CLEO {
 	//0AB1=-1,call_scm_func %1p%
 	OpcodeResult __stdcall opcode_0AB1(CRunningScript *thread)
 	{
-		int		label;
-		*thread >> label;
+		BYTE* base = nullptr;
+		int label = 0;
+
+		char* moduleTxt = nullptr;
+		switch (*thread->GetBytePointer())
+		{
+			// label of current script
+			case DT_DWORD:
+			case DT_WORD:
+			case DT_BYTE:
+			case DT_VAR:
+			case DT_LVAR:
+			case DT_VAR_ARRAY:
+			case DT_LVAR_ARRAY:
+				base = thread->GetBasePointer(); // current script
+				*thread >> label;
+				break;
+
+			// string with module and export name
+			case DT_VAR_STRING:
+			case DT_LVAR_STRING:
+			case DT_VAR_TEXTLABEL:
+			case DT_LVAR_TEXTLABEL:
+				moduleTxt = GetScriptParamPointer(thread)->pcParam;
+				break;
+
+			case DT_STRING:
+			case DT_TEXTLABEL:
+			case DT_VARLEN_STRING:
+				moduleTxt = readString(thread);
+				break;
+
+			default:
+			{
+				std::string err(128, '\0');
+				sprintf(err.data(), "Invalid first argument type (%02X) of 0AB1 opcode in script '%s'", *thread->GetBytePointer(), thread->GetName());
+				Error(err.data());
+				return OR_CONTINUE; // TODO: now what?
+			}
+		}
+		
+		// parse module reference
+		if (moduleTxt != nullptr)
+		{
+			std::string str(moduleTxt);
+			auto pos = str.find('@');
+			if (pos == str.npos)
+			{
+				std::string err(128, '\0');
+				sprintf(err.data(), "Invalid module reference '%s' of 0AB1 opcode in script '%s'", str.c_str(), thread->GetName());
+				Error(err.data());
+				return OR_CONTINUE; // TODO: now what?
+			}
+
+			str[pos] = '\0'; // split into two texts
+
+			auto scriptRef = GetInstance().ModuleSystem.GetExport(&str[pos + 1], &str[0]);
+			if (!scriptRef.Valid())
+			{
+				std::string err(128, '\0');
+				sprintf(err.data(), "Not found module's '%s' export '%s' requested by 0AB1 opcode in script '%s'", &str[pos + 1], &str[0], thread->GetName());
+				Error(err.data());
+				return OR_CONTINUE; // TODO: now what?
+			}
+
+			base = (BYTE*)scriptRef.base;
+			label = scriptRef.offset;
+		}
 
 		DWORD nParams = 0;
 		if(*thread->GetBytePointer()) *thread >> nParams;
@@ -1722,7 +1791,8 @@ namespace CLEO {
 		}
 
 		// jump to label
-		ThreadJump(thread, label);
+		thread->SetBaseIp(base); // script space
+		ThreadJump(thread, label); // script offset
 		return OR_CONTINUE;
 	}
 

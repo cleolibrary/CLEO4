@@ -6,7 +6,7 @@
 #include "CDebug.h"
 #include "CDmaFix.h"
 #include "CGameMenu.h"
-#include "CModulesSystem.h"
+#include "CModuleSystem.h"
 #include "CPluginSystem.h"
 #include "CScriptEngine.h"
 #include "CCustomOpcodeSystem.h"
@@ -22,6 +22,18 @@ namespace CLEO
         bool			m_bStarted;
 
     public:
+        CDmaFix					DmaFix;
+        CGameMenu				GameMenu;
+        CCodeInjector			CodeInjector;
+        CGameVersionManager		VersionManager;
+        CScriptEngine			ScriptEngine;
+        CTextManager			TextManager;
+        CCustomOpcodeSystem		OpcodeSystem;
+        CModuleSystem			ModuleSystem;
+        CSoundSystem			SoundSystem;
+        CPluginSystem			PluginSystem;
+        //CLegacy				Legacy;
+
         CCleoInstance()
         {
             m_bStarted = false;
@@ -51,24 +63,16 @@ namespace CLEO
             SoundSystem.Inject(CodeInjector);
             OpcodeSystem.Inject(CodeInjector);
             ScriptEngine.Inject(CodeInjector);
+
+            // TODO: call it on new game start
+            ModuleSystem.Clear();
+            ModuleSystem.LoadCleoModules();
         }
 
         void Stop()
         {
             if (!m_bStarted) return;
         }
-
-        CDmaFix					DmaFix;
-        CGameMenu				GameMenu;
-        CCodeInjector			CodeInjector;
-        CGameVersionManager		VersionManager;
-        CScriptEngine			ScriptEngine;
-        CTextManager			TextManager;
-        CCustomOpcodeSystem		OpcodeSystem;
-        CModuleSystem           ModuleSystem;
-        CSoundSystem			SoundSystem;
-        CPluginSystem			PluginSystem;
-        //CLegacy					Legacy;
     };
 
     CCleoInstance& GetInstance();
