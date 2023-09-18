@@ -112,14 +112,12 @@ void CLEO::CModuleSystem::normalizePath(std::string& path)
 	for (char& c : path)
 	{
 		// standarize path separators
-		if (c == '\\')
-			c = '/';
+		if (c == '/')
+			c = '\\';
 
 		// lower case
 		c = std::tolower(c);
 	};
-
-	// TODO: resolve "../" in path
 }
 
 void CModuleSystem::CModule::Clear()
