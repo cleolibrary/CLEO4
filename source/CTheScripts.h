@@ -287,4 +287,12 @@ public:
         bIsMission = 0;
         bWastedBustedCheck = 1;
     }
+
+    // absolute path to directory where script's source file is located
+    const char* GetScriptFileDir() const;
+    void SetScriptFileDir(const char* directory);
+
+    // filename with type extension of script's source file
+    const char* GetScriptFileName() const;
+    void SetScriptFileName(const char* filename);
 };

@@ -6,6 +6,8 @@
 #include "CTextManager.h"
 #include "CModelInfo.h"
 
+#include <filesystem>
+
 namespace CLEO {
 	DWORD FUNC_fopen;
 	DWORD FUNC_fclose;
@@ -840,7 +842,9 @@ namespace CLEO {
 		bool savedNotFlag;
 		static const size_t store_size = 0x400;
 		static ScmFunction *Store[store_size];
-		static size_t allocationPlace;			// contains an index of last allocated object
+		static size_t allocationPlace; // contains an index of last allocated object
+		std::string savedScriptFileDir; // modules switching
+		std::string savedScriptFileName; // modules switching
 
 		void *operator new(size_t size)
 		{
@@ -877,6 +881,9 @@ namespace CLEO {
 			savedCondResult = cs->bCondResult;
 			savedLogicalOp = cs->LogicalOp;
 			savedNotFlag = cs->NotFlag;
+
+			savedScriptFileDir = thread->GetScriptFileDir();
+			savedScriptFileName = thread->GetScriptFileName();
 
 			// init new scope
 			std::fill(std::begin(cs->Stack), std::end(cs->Stack), nullptr);
@@ -919,6 +926,9 @@ namespace CLEO {
 				cs->bCondResult = condResult;
 				cs->LogicalOp = savedLogicalOp;
 			}
+
+			thread->SetScriptFileDir(savedScriptFileDir.c_str());
+			thread->SetScriptFileName(savedScriptFileName.c_str());
 
 			cs->SetIp(retnAddress);
 			cs->SetScmFunction(prevScmFunctionId);
@@ -1693,7 +1703,7 @@ namespace CLEO {
 			}
 		}
 		
-		// parse module reference
+		// parse module reference text
 		if (moduleTxt != nullptr)
 		{
 			std::string str(moduleTxt);
@@ -1708,7 +1718,17 @@ namespace CLEO {
 
 			str[pos] = '\0'; // split into two texts
 
-			auto scriptRef = GetInstance().ModuleSystem.GetExport(&str[pos + 1], &str[0]);
+			// get module's absolute path
+			std::string modulePath(&str[pos + 1]);
+			modulePath = ResolveCleoPath(modulePath.c_str());
+
+			if (std::filesystem::path(modulePath).is_relative()) // path relative to current script
+			{
+				modulePath = std::string(thread->GetScriptFileDir()) + '\\' + modulePath;
+				modulePath = ResolveCleoPath(modulePath.c_str());
+			}
+
+			auto scriptRef = GetInstance().ModuleSystem.GetExport(modulePath.c_str(), &str[0]);
 			if (!scriptRef.Valid())
 			{
 				std::string err(128, '\0');

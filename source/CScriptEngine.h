@@ -29,6 +29,9 @@ namespace CLEO
         std::vector<BYTE> script_draws;
         std::vector<BYTE> script_texts;
 
+        std::string scriptFileDir;
+        std::string scriptFileName;
+
     public:
 		inline RwTexture* GetScriptTextureById(unsigned int id)
 		{
@@ -70,6 +73,14 @@ namespace CLEO
 
         void StoreScriptCustoms();
         void RestoreScriptCustoms();
+
+        // absolute path to directory where script's source file is located
+        const char* GetScriptFileDir() const { return scriptFileDir.c_str(); }
+        void SetScriptFileDir(const char* directory) { scriptFileDir = directory; }
+
+        // filename with type extension of script's source file
+        const char* GetScriptFileName() const { return scriptFileName.c_str(); }
+        void SetScriptFileName(const char* filename) { scriptFileName = filename; }
     };
 
     class CScriptEngine : VInjectible
@@ -81,34 +92,33 @@ namespace CLEO
         CCustomScript *CustomMission;
 
         CCustomScript			*	LoadScript(const char *szFilePath);
-
     public:
-        static SCRIPT_VAR			CleoVariables[0x400];
-        inline CCustomScript		*	GetCustomMission() { return CustomMission; }
-        void							LoadCustomScripts(bool bMode = false);
-        void							SaveState();
-        CRunningScript			*	FindScriptNamed(const char *);
-        CCustomScript			*	FindCustomScriptNamed(const char*);
-        void							AddCustomScript(CCustomScript*);
-        void							RemoveCustomScript(CCustomScript*);
-        void							RemoveAllCustomScripts();
-        void							UnregisterAllScripts();
-        void							ReregisterAllScripts();
-        inline size_t				WorkingScriptsCount() { return CustomScripts.size(); }
-        virtual void					Inject(CCodeInjector&);
+        std::string MainScriptFileDir;
+        std::string MainScriptFileName;
 
-        CScriptEngine()
-        {
-            CustomMission = nullptr;
-        }
+        static SCRIPT_VAR CleoVariables[0x400];
 
-        ~CScriptEngine()
-        {
-            TRACE("Unloading scripts...");
-            RemoveAllCustomScripts();
-        }
+        CScriptEngine();
+        ~CScriptEngine();
+        
+        virtual void Inject(CCodeInjector&);
+        void Initialize(); // call after new game started
+        void LoadCustomScripts(bool bMode = false);
+
+        void SaveState();
+
+        CRunningScript*	FindScriptNamed(const char *);
+        CCustomScript*	FindCustomScriptNamed(const char*);
+        void AddCustomScript(CCustomScript*);
+        void RemoveCustomScript(CCustomScript*);
+        void RemoveAllCustomScripts();
+        void UnregisterAllScripts();
+        void ReregisterAllScripts();
 
         void DrawScriptStuff(char bBeforeFade);
+
+        inline CCustomScript* GetCustomMission() { return CustomMission; }
+        inline size_t WorkingScriptsCount() { return CustomScripts.size(); }
     };
 
     extern void(__thiscall * AddScriptToQueue)(CRunningScript *, CRunningScript **queue);

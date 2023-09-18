@@ -57,6 +57,9 @@
     <ClCompile Include="source\CModuleSystem.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="source\CTheScripts.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\CCodeInjector.h">

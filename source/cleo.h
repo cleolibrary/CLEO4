@@ -63,10 +63,6 @@ namespace CLEO
             SoundSystem.Inject(CodeInjector);
             OpcodeSystem.Inject(CodeInjector);
             ScriptEngine.Inject(CodeInjector);
-
-            // TODO: call it on new game start
-            ModuleSystem.Clear();
-            ModuleSystem.LoadCleoModules();
         }
 
         void Stop()
@@ -76,6 +72,9 @@ namespace CLEO
     };
 
     CCleoInstance& GetInstance();
+
+    // resolve paths starting with "[digit]:\..." info full absolute paths
+    std::string ResolveCleoPath(const char* path);
 }
 
 #endif
