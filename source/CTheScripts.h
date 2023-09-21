@@ -288,11 +288,13 @@ public:
         bWastedBustedCheck = 1;
     }
 
+    bool IsCustom(); // is it CLEO Script?
+
     // absolute path to directory where script's source file is located
-    const char* GetScriptFileDir() const;
+    const char* GetScriptFileDir();
     void SetScriptFileDir(const char* directory);
 
     // filename with type extension of script's source file
-    const char* GetScriptFileName() const;
+    const char* GetScriptFileName();
     void SetScriptFileName(const char* filename);
 };
