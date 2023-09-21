@@ -14,22 +14,8 @@ void CModuleSystem::Clear()
 
 const ScriptDataRef CModuleSystem::GetExport(const char* moduleName, const char* exportName)
 {
-	// TODO: get current working dir
-	std::string path = "";
-
-	size_t len = strlen(moduleName);
-	if (path.empty())
-	{
-		path.reserve(len);
-	}
-	else
-	{
-		path.reserve(path.length() + len + 1);
-		path.push_back('/'); // path separator
-	}
-
-	path += moduleName;
-	normalizePath(path);
+	std::string path(moduleName);
+	NormalizePath(path);
 
 	auto it = modules.find(path);
 	if (it == modules.end()) // module not loaded yet?
@@ -56,7 +42,7 @@ bool CModuleSystem::LoadFile(const char* path)
 	CModule module;
 
 	std::string normalizedPath(path);
-	normalizePath(normalizedPath);
+	NormalizePath(normalizedPath);
 
 	if (!module.LoadFromFile(normalizedPath.c_str()))
 	{
@@ -71,13 +57,22 @@ bool CModuleSystem::LoadDirectory(const char* path)
 {
 	bool result = true;
 
-	for (auto& it : std::filesystem::recursive_directory_iterator(path))
+	auto p = CLEO::ResolvePath(path); // actual absolute path
+	try
 	{
-		auto& filePath = it.path();
-		if (filePath.extension() == ".s")
+		for (auto& it : std::filesystem::recursive_directory_iterator(p))
 		{
-			result &= LoadFile(filePath.string().c_str());
+			auto& filePath = it.path();
+			if (filePath.extension() == ".s")
+			{
+				result &= LoadFile(filePath.string().c_str());
+			}
 		}
+	}
+	catch (const std::exception& ex)
+	{
+		TRACE("Error while iterating CLEO Modules: %s", ex.what());
+		return false;
 	}
 
 	return result;
@@ -85,7 +80,7 @@ bool CModuleSystem::LoadDirectory(const char* path)
 
 bool CModuleSystem::LoadCleoModules()
 {
-	return LoadDirectory("cleo/cleo_modules"); // TODO: select work dir
+	return LoadDirectory("3:\\"); // cleo\cleo_modules
 }
 
 bool CModuleSystem::Reload()
@@ -107,7 +102,7 @@ bool CModuleSystem::Reload()
 	return result;
 }
 
-void CLEO::CModuleSystem::normalizePath(std::string& path)
+void CLEO::CModuleSystem::NormalizePath(std::string& path)
 {
 	for (char& c : path)
 	{
@@ -146,72 +141,118 @@ bool CModuleSystem::CModule::LoadFromFile(const char* path)
 #pragma warning ( push )
 #pragma warning ( disable: 4838 )
 #pragma warning ( disable: 4309 )
-	const char Header_First_Instruction[] = { 0x02, 0x00, 0x01 }; // jump, param type
-	const char Header_Magic[] = { 0xFF, 0x7F, 0xFE, 0x00, 0x00 }; // Rockstar custom header magic
-	const char Header_Module_Signature[] = { 'E', 'X', 'P', 'T' }; // CLEO's module header signature
+	const char Segment_First_Instruction[] = { 0x02, 0x00, 0x01 }; // jump, param type
+	const char Segment_Magic[] = { 0xFF, 0x7F, 0xFE, 0x00, 0x00 }; // Rockstar custom header magic
+	const char Header_Signature_Module_Exports[] = { 'E', 'X', 'P', 'T' }; // CLEO's module header signature
 #pragma warning ( pop )
 
+	// read first instruction
 #pragma pack(push, 1)
 	struct
 	{
 		char firstInstruction[3];
 		int jumpAddress;
 		char magic[5];
+	} segment;
+#pragma pack(pop)
+
+	file.read((char*)&segment, sizeof(segment));
+	if (file.fail())
+	{
+		TRACE("Module '%s' file header read error", path);
+		return false;
+	}
+
+	// verify segment data
+	if (std::memcmp(segment.firstInstruction, Segment_First_Instruction, sizeof(Segment_First_Instruction)) != 0 ||
+		segment.jumpAddress >= 0 || // jump labels should be negative values
+		std::memcmp(segment.magic, Segment_Magic, sizeof(Segment_Magic)) != 0) // not a custom header
+	{
+		TRACE("Module '%s' load error. Custom segment not present", path);
+		return false;
+	}
+	segment.jumpAddress = abs(segment.jumpAddress); // turn label into actual file offset
+
+	// process custom headers
+#pragma pack(push, 1)
+	struct
+	{
 		char signature[4];
 		int size;
 	} header;
 #pragma pack(pop)
 
-	file.read((char*)&header, sizeof(header));
-	if (file.fail())
+	bool result = false; // no custom header found yet
+	while (file.tellg() < segment.jumpAddress)
 	{
-		TRACE("Module '%s' header read error", path);
-		return false;
-	}
-
-	// verify header data
-	if (std::memcmp(header.firstInstruction, Header_First_Instruction, sizeof(Header_First_Instruction)) != 0 ||
-		std::memcmp(header.magic, Header_Magic, sizeof(Header_Magic)) != 0 ||
-		std::memcmp(header.signature, Header_Module_Signature, sizeof(Header_Module_Signature)) != 0 ||
-		header.size <= 0)
-	{
-		TRACE("Module '%s' load error. Invalid module file", path);
-		return false;
-	}
-
-	auto endPos = file.tellg();
-	endPos += header.size;
-
-	while (true)
-	{
-		ModuleExport e;
-
-		if (!e.LoadFromFile(file) || 
-			!file.good() ||
-			file.tellg() > endPos)
-		{
-			if (e.name.empty())
-			{
-				TRACE("Module '%s' export load error.", path);
-			}
-			else
-			{
-				TRACE("Module's '%s' export '%s' load error.", path);
-			}
+		file.read((char*)&header, sizeof(header));
+		if (file.fail() ||
+			file.tellg() > segment.jumpAddress) // read past the segment end
+		{ 
+			TRACE("Module '%s' load error. Invalid custom header", path);
 			return false;
 		}
 
-		exports[e.name] = std::move(e); // move to container
+		auto headerEndPos = file.tellg();
+		headerEndPos += header.size;
 
-		if (file.tellg() == endPos)
+		// CLEO Module Exports
+		if (std::memcmp(header.signature, Header_Signature_Module_Exports, sizeof(Header_Signature_Module_Exports)) == 0)
 		{
-			break; // all exports done
+			if (headerEndPos > segment.jumpAddress)
+			{
+				TRACE("Module '%s' load error. Invalid size of exports header", path);
+				return false;
+			}
+
+			while (true)
+			{
+				ModuleExport e;
+
+				if (!e.LoadFromFile(file) ||
+					!file.good() ||
+					file.tellg() > headerEndPos)
+				{
+					if (e.name.empty())
+					{
+						TRACE("Module '%s' export load error.", path);
+					}
+					else
+					{
+						TRACE("Module's '%s' export '%s' load error.", path, e.name.c_str());
+					}
+					return false;
+				}
+
+				exports[e.name] = std::move(e); // move to container
+				result = true; // something useful loaded
+
+				if (file.tellg() == headerEndPos)
+				{
+					break; // all exports done
+				}
+			}
+		}
+		else // other unknown header type
+		{
+			file.seekg(headerEndPos, file.beg);
+			if (file.fail())
+			{
+				TRACE("Module '%s' load error. Error while skipping unknown header type", path);
+				return false;
+			}
 		}
 	}
 
 	if (!file.good())
 	{
 		TRACE("Module '%s' read error", path);
+		return false;
+	}
+
+	if (!result) // no usable elements found. No point to keeping this module
+	{
+		TRACE("Module '%s' skipped. Nothing found", path);
 		return false;
 	}
 

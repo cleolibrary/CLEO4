@@ -692,8 +692,8 @@ namespace CLEO
 
         if (missionPackIdx == 0)
         {
-            MainScriptFileDir += "0:\\data"; // at game root
-            MainScriptFileName = "main.sc";
+            MainScriptFileDir += "0:\\data\\script"; // at game root
+            MainScriptFileName = "main.scm";
         }
         else
         {

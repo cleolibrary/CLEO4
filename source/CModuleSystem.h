@@ -28,7 +28,7 @@ namespace CLEO
 		bool Reload(); // reload already loaded modules. Not safe if any module code is currently in exectuion!
 
 	private:
-		static void normalizePath(std::string& path);
+		static void NormalizePath(std::string& path);
 
 		class CModule
 		{

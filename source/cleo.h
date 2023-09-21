@@ -73,8 +73,8 @@ namespace CLEO
 
     CCleoInstance& GetInstance();
 
-    // resolve paths starting with "[digit]:\..." info full absolute paths
-    std::string ResolveCleoPath(const char* path);
+    // get absolute path. Supports predefined CLEO paths starting with '[digit]:'
+    std::string ResolvePath(const char* path, const char* workDir = nullptr);
 }
 
 #endif

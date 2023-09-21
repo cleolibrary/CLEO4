@@ -1697,9 +1697,9 @@ namespace CLEO {
 			default:
 			{
 				std::string err(128, '\0');
-				sprintf(err.data(), "Invalid first argument type (%02X) of 0AB1 opcode in script '%s'", *thread->GetBytePointer(), thread->GetName());
+				sprintf(err.data(), "Invalid first argument type (%02X) of 0AB1 opcode in script '%s'", *thread->GetBytePointer(), thread->GetScriptFileName());
 				Error(err.data());
-				return OR_CONTINUE; // TODO: now what?
+				return OR_INTERRUPT;
 			}
 		}
 		
@@ -1711,30 +1711,23 @@ namespace CLEO {
 			if (pos == str.npos)
 			{
 				std::string err(128, '\0');
-				sprintf(err.data(), "Invalid module reference '%s' of 0AB1 opcode in script '%s'", str.c_str(), thread->GetName());
+				sprintf(err.data(), "Invalid module reference '%s' in 0AB1 opcode in script '%s'", str.c_str(), thread->GetScriptFileName());
 				Error(err.data());
-				return OR_CONTINUE; // TODO: now what?
+				return OR_INTERRUPT;
 			}
-
 			str[pos] = '\0'; // split into two texts
 
 			// get module's absolute path
 			std::string modulePath(&str[pos + 1]);
-			modulePath = ResolveCleoPath(modulePath.c_str());
-
-			if (std::filesystem::path(modulePath).is_relative()) // path relative to current script
-			{
-				modulePath = std::string(thread->GetScriptFileDir()) + '\\' + modulePath;
-				modulePath = ResolveCleoPath(modulePath.c_str());
-			}
+			modulePath = ResolvePath(modulePath.c_str(), thread->GetScriptFileDir());
 
 			auto scriptRef = GetInstance().ModuleSystem.GetExport(modulePath.c_str(), &str[0]);
 			if (!scriptRef.Valid())
 			{
 				std::string err(128, '\0');
-				sprintf(err.data(), "Not found module's '%s' export '%s' requested by 0AB1 opcode in script '%s'", &str[pos + 1], &str[0], thread->GetName());
+				sprintf(err.data(), "Not found module '%s' export '%s', requested by 0AB1 opcode in script '%s'", &str[pos + 1], &str[0], thread->GetScriptFileName());
 				Error(err.data());
-				return OR_CONTINUE; // TODO: now what?
+				return OR_INTERRUPT;
 			}
 
 			base = (BYTE*)scriptRef.base;
