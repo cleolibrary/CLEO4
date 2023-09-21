@@ -1,4 +1,4 @@
-# CLEO Library for GTA San Andreas
+# CLEO Library for GTA San Andreas (Windows PC)
 
 CLEO is a hugely popular extensible library plugin which brings new possibilities in scripting for the game Grand Theft Auto: San Andreas by Rockstar Games, allowing the use of thousands of unique mods which change or expand the gameplay. You may find more information about CLEO on the official website https://cleo.li
 

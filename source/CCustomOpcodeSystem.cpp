@@ -122,6 +122,8 @@ namespace CLEO {
 	OpcodeResult __stdcall opcode_0AEE(CRunningScript *thread);
 	OpcodeResult __stdcall opcode_0AEF(CRunningScript *thread);
 
+	OpcodeResult __stdcall opcode_0DD5(CRunningScript* thread); // get_platform
+
 	CustomOpcodeHandler customOpcodeHandlers[100] =
 	{
 		opcode_0A8C, opcode_0A8D, opcode_0A8E, opcode_0A8F, opcode_0A90,
@@ -261,6 +263,8 @@ namespace CLEO {
 
 		// fill the rest with default handler
 		std::fill(newOpcodeHandlerTable + 28, newOpcodeHandlerTable + 329, reinterpret_cast<_OpcodeHandler>(extraOpcodeHandler));
+
+		CLEO_RegisterOpcode(0x0DD5, opcode_0DD5); // get_platform
 
 		FUNC_fopen = gvm.TranslateMemoryAddress(MA_FOPEN_FUNCTION);
 		FUNC_fclose = gvm.TranslateMemoryAddress(MA_FCLOSE_FUNCTION);
@@ -2645,6 +2649,13 @@ namespace CLEO {
 		*thread << (float)(log(arg) / log(base));
 		return OR_CONTINUE;
 	}
+
+	//0DD5=1,%1d% = get_platform
+	OpcodeResult __stdcall opcode_0DD5(CRunningScript* thread)
+	{
+		*thread << PLATFORM_WINDOWS;
+		return OR_CONTINUE;
+	}
 }
 
 
@@ -2655,27 +2666,6 @@ namespace CLEO {
 extern "C"
 {
 	using namespace CLEO;
-
-	// Define external symbols with MSVC decorating schemes
-	BOOL WINAPI CLEO_RegisterOpcode(WORD opcode, CustomOpcodeHandler callback);
-	DWORD WINAPI CLEO_GetIntOpcodeParam(CRunningScript* thread);
-	float WINAPI CLEO_GetFloatOpcodeParam(CRunningScript* thread);
-	void WINAPI CLEO_SetIntOpcodeParam(CRunningScript* thread, DWORD value);
-	void WINAPI CLEO_SetFloatOpcodeParam(CRunningScript* thread, float value);
-	LPSTR WINAPI CLEO_ReadStringOpcodeParam(CRunningScript* thread, char *buf, int size);
-	LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CRunningScript* thread, char *buf, int size);
-	void WINAPI CLEO_WriteStringOpcodeParam(CRunningScript* thread, LPCSTR str);
-	void WINAPI CLEO_SetThreadCondResult(CRunningScript* thread, BOOL result);
-	void WINAPI CLEO_SkipOpcodeParams(CRunningScript* thread, int count);
-	void WINAPI CLEO_ThreadJumpAtLabelPtr(CRunningScript* thread, int labelPtr);
-	int WINAPI CLEO_GetOperandType(CRunningScript* thread);
-	void WINAPI CLEO_RetrieveOpcodeParams(CRunningScript *thread, int count);
-	void WINAPI CLEO_RecordOpcodeParams(CRunningScript *thread, int count);
-	SCRIPT_VAR * WINAPI CLEO_GetPointerToScriptVariable(CRunningScript* thread);
-	RwTexture * WINAPI CLEO_GetScriptTextureById(CRunningScript* thread, int id);
-	HSTREAM WINAPI CLEO_GetInternalAudioStream(CRunningScript* thread, CAudioStream *stream);
-	CRunningScript* WINAPI CLEO_CreateCustomScript(CRunningScript* fromThread, const char *fileName, int label);
-
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable:4550)
