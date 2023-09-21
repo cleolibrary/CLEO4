@@ -2,6 +2,8 @@
 #include "cleo.h"
 
 #include <filesystem>
+#include <windows.h> // TODO: remove after viarual paths support added
+#include <shlobj.h> // TODO: remove after viarual paths support added
 
 namespace CLEO
 {
@@ -185,7 +187,7 @@ namespace CLEO
 
         GetInstance().ScriptEngine.Initialize();
         GetInstance().ModuleSystem.Clear();
-        GetInstance().ModuleSystem.LoadCleoModules();
+        //GetInstance().ModuleSystem.LoadCleoModules(); // TODO: enbale if cleo_modules approved
         GetInstance().ScriptEngine.LoadCustomScripts(false);
     }
 
@@ -692,12 +694,23 @@ namespace CLEO
 
         if (missionPackIdx == 0)
         {
-            MainScriptFileDir += "0:\\data\\script"; // at game root
+            //MainScriptFileDir += "0:\\data\\script"; // at game root TODO: enable when CLEO virtual paths available
+            MainScriptFileDir = std::string(MAX_PATH, '\0');
+            GetModuleFileNameA(NULL, MainScriptFileDir.data(), MAX_PATH);
+            MainScriptFileDir.resize(strlen(MainScriptFileDir.data()));
+            MainScriptFileDir = std::filesystem::path(MainScriptFileDir).parent_path().string(); // remove executable name
+            MainScriptFileDir += "\\data\\script";
+            
             MainScriptFileName = "main.scm";
         }
         else
         {
-            MainScriptFileDir = "1:\\MPACK\\MPACK"; // at user data
+            //MainScriptFileDir = "1:\\MPACK\\MPACK"; // at user data TODO: enable when CLEO virtual paths available 
+            MainScriptFileDir = std::string(MAX_PATH, '\0');
+            SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, MainScriptFileDir.data());
+            MainScriptFileDir.resize(strlen(MainScriptFileDir.data()));
+            MainScriptFileDir += "\\GTA San Andreas User Files";
+
             MainScriptFileDir += std::to_string(missionPackIdx);
             MainScriptFileName = "scr.scm";
         }

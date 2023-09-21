@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "cleo.h"
-#include <windows.h>
-#include <shlobj.h>
+//#include <windows.h>
+//#include <shlobj.h>
 
 #include <filesystem>
 
@@ -40,8 +40,11 @@ namespace CLEO
             result = path;
         }
 
+        return result;
+
+        // TODO: CLEO virtual paths. Enable later
         // predefined CLEO paths starting with '[digit]:'
-        if (result.length() < 2 || result[1] != ':' ||
+        /*if (result.length() < 2 || result[1] != ':' ||
             result[0] < '0' || result[0] > '3') // supported range
         {
             return result; // not predefined path prefix found
@@ -73,7 +76,7 @@ namespace CLEO
         }
 
         resolved += &result[2]; // original path without 'X:' prefix
-        return resolved;
+        return resolved;*/
     }
 
     void __declspec(naked) CCleoInstance::OnUpdateGameLogics()
