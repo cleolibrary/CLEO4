@@ -19,6 +19,10 @@ namespace CLEO
     bool is_legacy_handle(DWORD dwHandle);
     FILE * convert_handle_to_file(DWORD dwHandle);
 
+    extern const char* (__cdecl* GetUserDirectory)();
+    extern void(__cdecl* ChangeToUserDir)();
+    extern void(__cdecl* ChangeToProgramDir)(const char*);
+
     class CCustomOpcodeSystem : public VInjectible
     {
         friend OpcodeResult __stdcall opcode_0A9A(CRunningScript *pScript);

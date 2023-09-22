@@ -12,6 +12,24 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\CCodeInjector.cpp" />
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CFileMgr.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CGame.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\shared\DynAddress.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\shared\GameVersion.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\shared\Patch.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\shared\PluginBase.cpp">
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source\CCustomOpcodeSystem.cpp" />
     <ClCompile Include="source\CDebug.cpp" />
     <ClCompile Include="source\CDmaFix.cpp" />

@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "cleo.h"
+#include "CFileMgr.h"
+#include "CGame.h"
 
 #include <filesystem>
-#include <windows.h> // TODO: remove after viarual paths support added
-#include <shlobj.h> // TODO: remove after viarual paths support added
 
 namespace CLEO
 {
@@ -690,28 +690,21 @@ namespace CLEO
 
     void CScriptEngine::Initialize()
     {
-        unsigned char missionPackIdx = *((unsigned char*)0xB72910); // TODO: use CGame::bMissionPackGame instead
-
-        if (missionPackIdx == 0)
+        if (CGame::bMissionPackGame == 0) // regular main game
         {
-            //MainScriptFileDir += "0:\\data\\script"; // at game root TODO: enable when CLEO virtual paths available
-            MainScriptFileDir = std::string(MAX_PATH, '\0');
-            GetModuleFileNameA(NULL, MainScriptFileDir.data(), MAX_PATH);
-            MainScriptFileDir.resize(strlen(MainScriptFileDir.data()));
-            MainScriptFileDir = std::filesystem::path(MainScriptFileDir).parent_path().string(); // remove executable name
-            MainScriptFileDir += "\\data\\script";
+            //MainScriptFileDir = "0:\\data\\script"; // at user data TODO: enable when CLEO virtual paths available
+            MainScriptFileDir = CFileMgr::ms_rootDirName;
+            MainScriptFileDir += "data\\script";
             
             MainScriptFileName = "main.scm";
         }
-        else
+        else // mission pack
         {
-            //MainScriptFileDir = "1:\\MPACK\\MPACK"; // at user data TODO: enable when CLEO virtual paths available 
-            MainScriptFileDir = std::string(MAX_PATH, '\0');
-            SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, MainScriptFileDir.data());
-            MainScriptFileDir.resize(strlen(MainScriptFileDir.data()));
-            MainScriptFileDir += "\\GTA San Andreas User Files";
+            //MainScriptFileDir = "1:\\MPACK\\MPACK"; // at user data TODO: enable when CLEO virtual paths available
+            MainScriptFileDir = CLEO::GetUserDirectory();
+            MainScriptFileDir += "\\MPACK\\MPACK";
+            MainScriptFileDir += std::to_string(CGame::bMissionPackGame);
 
-            MainScriptFileDir += std::to_string(missionPackIdx);
             MainScriptFileName = "scr.scm";
         }
     }

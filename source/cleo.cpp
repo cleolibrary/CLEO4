@@ -1,9 +1,6 @@
 #include "stdafx.h"
 #include "cleo.h"
-//#include <windows.h>
-//#include <shlobj.h>
 
-#include <filesystem>
 
 namespace CLEO
 {
@@ -54,17 +51,13 @@ namespace CLEO
 
         if (result[0] == '1') // 1: game saves
         {
-            SHGetFolderPathA(NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, resolved.data());
-            resolved.resize(strlen(resolved.data()));
-            resolved += "\\GTA San Andreas User Files";
+            // TODO: move logic from CScriptEngine::Initialize()
             resolved += &result[2]; // original path without '1:' prefix
             return resolved;
         }
 
         // 0: game root directory
-        GetModuleFileNameA(NULL, resolved.data(), MAX_PATH);
-        resolved.resize(strlen(resolved.data()));
-        resolved = std::filesystem::path(resolved).parent_path().string(); // remove executable name
+        // TODO: move logic from CScriptEngine::Initialize()
         
         if (result[0] == '2') // 2: cleo directory
         {

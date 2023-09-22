@@ -7,6 +7,9 @@
     <Filter Include="cleo_sdk">
       <UniqueIdentifier>{d188d452-fbc6-48b5-bd49-d4036c989109}</UniqueIdentifier>
     </Filter>
+    <Filter Include="plugin_sdk">
+      <UniqueIdentifier>{5cead5cc-9a75-4d2e-99b5-ebbc8f9d6d86}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="source\CCodeInjector.cpp">
@@ -59,6 +62,24 @@
     </ClCompile>
     <ClCompile Include="source\CTheScripts.cpp">
       <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CFileMgr.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CGame.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+	<ClCompile Include="$(PLUGIN_SDK_DIR)\shared\DynAddress.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="$(PLUGIN_SDK_DIR)\shared\GameVersion.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+	<ClCompile Include="$(PLUGIN_SDK_DIR)\shared\Patch.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+	<ClCompile Include="$(PLUGIN_SDK_DIR)\shared\PluginBase.cpp">
+      <Filter>plugin_sdk</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
