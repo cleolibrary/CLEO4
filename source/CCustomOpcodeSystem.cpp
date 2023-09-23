@@ -1725,7 +1725,7 @@ namespace CLEO {
 			if (!scriptRef.Valid())
 			{
 				std::string err(128, '\0');
-				sprintf(err.data(), "Not found module '%s' export '%s', requested by 0AB1 opcode in script '%s'", &str[pos + 1], &str[0], thread->GetScriptFileName());
+				sprintf(err.data(), "Not found module '%s' export '%s', requested by 0AB1 opcode in script '%s'", modulePath.c_str(), &str[0], thread->GetScriptFileName());
 				Error(err.data());
 				return OR_INTERRUPT;
 			}

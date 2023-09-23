@@ -39,6 +39,8 @@ namespace CLEO
 
 				void Clear();
 				bool LoadFromFile(std::ifstream& file);
+
+				static void NormalizeName(std::string& name);
 			};
 
 			std::string filepath;

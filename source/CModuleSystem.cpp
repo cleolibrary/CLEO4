@@ -274,9 +274,10 @@ bool CModuleSystem::CModule::LoadFromFile(const char* path)
 
 const ScriptDataRef CModuleSystem::CModule::GetExport(const char* name)
 {
-	// TODO: normalize export name?
+	auto normalized = std::string(name);
+	ModuleExport::NormalizeName(normalized);
 
-	auto it = exports.find(name);
+	auto it = exports.find(normalized);
 	if (it == exports.end())
 	{
 		return {};
@@ -305,6 +306,7 @@ bool CModuleSystem::CModule::ModuleExport::LoadFromFile(std::ifstream& file)
 	{
 		return false;
 	}
+	NormalizeName(name);
 
 	// address
 	file.read((char*)&offset, 4);
@@ -344,4 +346,12 @@ bool CModuleSystem::CModule::ModuleExport::LoadFromFile(std::ifstream& file)
 	}
 
 	return true; // done
+}
+
+void CModuleSystem::CModule::ModuleExport::NormalizeName(std::string& name)
+{
+	for (auto& ch : name)
+	{
+		ch = std::tolower(ch);
+	}
 }
