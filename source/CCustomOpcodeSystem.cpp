@@ -1812,6 +1812,8 @@ namespace CLEO {
 	//0AB2=-1,ret
 	OpcodeResult __stdcall opcode_0AB2(CRunningScript *thread)
 	{
+		GetInstance().ModuleSystem.ReleaseModuleRef((char*)thread->GetBasePointer()); // release module if one used
+
 		ScmFunction *scmFunc = ScmFunction::Store[reinterpret_cast<CCustomScript*>(thread)->GetScmFunction()];
 		
 		DWORD nRetParams = 0;

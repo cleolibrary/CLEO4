@@ -17,7 +17,7 @@ const ScriptDataRef CModuleSystem::GetExport(const char* moduleName, const char*
 	std::string path(moduleName);
 	NormalizePath(path);
 
-	auto it = modules.find(path);
+	auto& it = modules.find(path);
 	if (it == modules.end()) // module not loaded yet?
 	{
 		if (!LoadFile(path.c_str()))
@@ -34,7 +34,12 @@ const ScriptDataRef CModuleSystem::GetExport(const char* moduleName, const char*
 	}
 	auto& module = it->second;
 
-	return module.GetExport(exportName);
+	auto e = module.GetExport(exportName);
+	if (e.Valid())
+	{
+		module.refCount++;
+	}
+	return e;
 }
 
 bool CModuleSystem::LoadFile(const char* path)
@@ -83,20 +88,42 @@ bool CModuleSystem::LoadCleoModules()
 	return LoadDirectory("3:\\"); // cleo\cleo_modules
 }
 
-bool CModuleSystem::Reload()
+void CLEO::CModuleSystem::AddModuleRef(const char* baseIP)
 {
-	std::set<std::string> names;
 	for (auto& it : modules)
 	{
-		names.insert(it.second.GetFilepath());
-	}
+		auto& module = it.second;
 
-	Clear();
+		if (module.data.data() == baseIP)
+		{
+			module.refCount++;
+			return;
+		}
+	}
+}
+
+void CLEO::CModuleSystem::ReleaseModuleRef(const char* baseIP)
+{
+	for (auto& it : modules)
+	{
+		auto& module = it.second;
+
+		if (module.data.data() == baseIP)
+		{
+			module.refCount--;
+			return;
+		}
+	}
+}
+
+bool CModuleSystem::Reload()
+{
+	TRACE("Reloading modules");
 
 	bool result = true;
-	for (auto& name : names)
+	for (auto& it : modules)
 	{
-		result &= LoadFile(name.c_str());
+		result &= it.second.Reload();
 	}
 
 	return result;
@@ -272,12 +299,27 @@ bool CModuleSystem::CModule::LoadFromFile(const char* path)
 	return true;
 }
 
+bool CLEO::CModuleSystem::CModule::Reload()
+{
+	if (refCount != 0)
+	{
+		TRACE("Module reload skipped. In use %d times. '%s'", refCount, filepath.c_str());
+		return false;
+	}
+
+	auto file = filepath;
+	Clear();
+	auto result = LoadFromFile(file.c_str());
+	TRACE("Module reload %s. '%s'", result ? "ok" : "failed", file.c_str());
+	return result;
+}
+
 const ScriptDataRef CModuleSystem::CModule::GetExport(const char* name)
 {
 	auto normalized = std::string(name);
 	ModuleExport::NormalizeName(normalized);
 
-	auto it = exports.find(normalized);
+	auto& it = exports.find(normalized);
 	if (it == exports.end())
 	{
 		return {};
