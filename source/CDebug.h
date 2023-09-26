@@ -1,4 +1,5 @@
 #pragma once
+#include <mutex>
 
 #define TRACE __noop
 
@@ -11,6 +12,8 @@ const char szLogFileName[] = "cleo.log";
 
 class CDebug
 {
+    std::mutex mutex;
+
 #ifdef DEBUGIT
     std::ofstream m_hFile;
 #endif
@@ -30,6 +33,8 @@ public:
 
     void Trace(const char *format, ...)
     {
+        std::lock_guard<std::mutex> guard(mutex);
+
         SYSTEMTIME			t;
         static char			szBuf[1024];
 

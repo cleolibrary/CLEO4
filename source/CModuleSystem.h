@@ -1,5 +1,9 @@
 #pragma once
+#include <atomic>
+#include <filesystem>
 #include <map>
+#include <mutex>
+#include <thread>
 
 namespace CLEO
 {
@@ -30,8 +34,6 @@ namespace CLEO
 		void AddModuleRef(const char* baseIP);
 		void ReleaseModuleRef(const char* baseIP);
 
-		bool Reload(); // reload already loaded modules that are not currently in use
-
 	private:
 		static void NormalizePath(std::string& path);
 
@@ -50,16 +52,26 @@ namespace CLEO
 				static void NormalizeName(std::string& name);
 			};
 
-			int refCount = 0;
-			std::string filepath;
+			std::string filepath; // source file
 			std::vector<char> data;
 			std::map<std::string, ModuleExport> exports;
 
+			// hot reloading when source file modified
+			std::atomic<int> refCount = 0;
+			std::filesystem::file_time_type fileTime; // last write time of source file
+			void Update();
+			std::atomic<bool> updateActive = true;
+			std::atomic<bool> updateNeeded = false;
+			std::mutex updateMutex;
+			std::thread updateThread;
+
 		public:
+			CModule();
+			~CModule();
+
 			void Clear();
 			const char* GetFilepath() const;
 			bool LoadFromFile(const char* path);
-			bool Reload();
 			const ScriptDataRef GetExport(const char* name);
 		};
 

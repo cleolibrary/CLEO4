@@ -2,6 +2,7 @@
 #include "cleo.h"
 #include "CModuleSystem.h"
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 
@@ -44,17 +45,14 @@ const ScriptDataRef CModuleSystem::GetExport(const char* moduleName, const char*
 
 bool CModuleSystem::LoadFile(const char* path)
 {
-	CModule module;
-
 	std::string normalizedPath(path);
 	NormalizePath(normalizedPath);
 
-	if (!module.LoadFromFile(normalizedPath.c_str()))
+	if (!modules[normalizedPath].LoadFromFile(normalizedPath.c_str()))
 	{
 		return false;
 	}
 
-	modules[normalizedPath] = std::move(module); // move to container
 	return true;
 }
 
@@ -116,20 +114,7 @@ void CLEO::CModuleSystem::ReleaseModuleRef(const char* baseIP)
 	}
 }
 
-bool CModuleSystem::Reload()
-{
-	TRACE("Reloading modules");
-
-	bool result = true;
-	for (auto& it : modules)
-	{
-		result &= it.second.Reload();
-	}
-
-	return result;
-}
-
-void CLEO::CModuleSystem::NormalizePath(std::string& path)
+void CModuleSystem::NormalizePath(std::string& path)
 {
 	for (char& c : path)
 	{
@@ -142,11 +127,73 @@ void CLEO::CModuleSystem::NormalizePath(std::string& path)
 	};
 }
 
+void CModuleSystem::CModule::Update()
+{
+	while (updateActive)
+	{
+		if (!updateNeeded)
+		{
+			std::filesystem::file_time_type time;
+			try
+			{
+				time = std::filesystem::last_write_time(filepath);
+			}
+			catch (...)
+			{
+				time = {};
+			}
+
+			// file not exists or up to date
+			if (time == std::filesystem::file_time_type{} || time == fileTime)
+			{
+				// query files once a second
+				for(size_t i = 0; i < 100 && updateActive; i++)
+					std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+				continue; 
+			}
+
+			updateNeeded = true;
+		}
+
+		if (refCount != 0)
+		{
+			continue; // module currently in use
+		}
+
+		auto file = filepath;
+		auto result = LoadFromFile(file.c_str());
+		updateNeeded = false;
+		TRACE("Module reload %s '%s'", result ? "OK" : "FAILED", file.c_str());
+	}
+}
+
+CModuleSystem::CModule::CModule() :
+	updateThread(&CModuleSystem::CModule::Update, this)
+{
+}
+
+CModuleSystem::CModule::~CModule()
+{
+	updateActive = false;
+	updateThread.join();
+}
+
 void CModuleSystem::CModule::Clear()
 {
+	if (refCount != 0)
+	{
+		TRACE("Warning! Module '%s' cleared despite in use %d time(s)", filepath.c_str(), refCount.load());
+	}
+
+	std::lock_guard<std::mutex> guard(updateMutex);
+
 	filepath.clear();
 	data.clear();
 	exports.clear();
+
+	refCount = 0;
+	fileTime = {};
 }
 
 const char* CModuleSystem::CModule::GetFilepath() const
@@ -157,6 +204,19 @@ const char* CModuleSystem::CModule::GetFilepath() const
 bool CModuleSystem::CModule::LoadFromFile(const char* path)
 {
 	Clear();
+
+	std::lock_guard<std::mutex> guard(updateMutex);
+
+	filepath = path;
+
+	try
+	{
+		fileTime = std::filesystem::last_write_time(path);
+	}
+	catch(...)
+	{
+		fileTime = {};
+	}
 
 	std::ifstream file(path, std::ios::binary);
 	if (!file.good())
@@ -297,21 +357,6 @@ bool CModuleSystem::CModule::LoadFromFile(const char* path)
 	}
 
 	return true;
-}
-
-bool CLEO::CModuleSystem::CModule::Reload()
-{
-	if (refCount != 0)
-	{
-		TRACE("Module reload skipped. In use %d times. '%s'", refCount, filepath.c_str());
-		return false;
-	}
-
-	auto file = filepath;
-	Clear();
-	auto result = LoadFromFile(file.c_str());
-	TRACE("Module reload %s. '%s'", result ? "ok" : "failed", file.c_str());
-	return result;
 }
 
 const ScriptDataRef CModuleSystem::CModule::GetExport(const char* name)
