@@ -125,6 +125,7 @@ namespace CLEO {
 	OpcodeResult __stdcall opcode_0AEF(CRunningScript *thread);
 
 	OpcodeResult __stdcall opcode_0DD5(CRunningScript* thread); // get_platform
+	OpcodeResult __stdcall opcode_0DD6(CRunningScript* thread); // trace
 
 	CustomOpcodeHandler customOpcodeHandlers[100] =
 	{
@@ -267,6 +268,7 @@ namespace CLEO {
 		std::fill(newOpcodeHandlerTable + 28, newOpcodeHandlerTable + 329, reinterpret_cast<_OpcodeHandler>(extraOpcodeHandler));
 
 		CLEO_RegisterOpcode(0x0DD5, opcode_0DD5); // get_platform
+		CLEO_RegisterOpcode(0x0DD6, opcode_0DD6); // trace
 
 		FUNC_fopen = gvm.TranslateMemoryAddress(MA_FOPEN_FUNCTION);
 		FUNC_fclose = gvm.TranslateMemoryAddress(MA_FCLOSE_FUNCTION);
@@ -2739,6 +2741,21 @@ namespace CLEO {
 	OpcodeResult __stdcall opcode_0DD5(CRunningScript* thread)
 	{
 		*thread << PLATFORM_WINDOWS;
+		return OR_CONTINUE;
+	}
+
+	//0DD6=1, trace %1s%
+	OpcodeResult __stdcall opcode_0DD6(CRunningScript* thread)
+	{
+		std::string formatStr(MAX_STR_LEN, '\0');
+		readString(thread, formatStr.data(), formatStr.length());
+		formatStr.resize(strlen(formatStr.c_str()));
+
+		std::string text(1024, '\0');
+		format(thread, text.data(), text.length(), formatStr.data());
+		SkipUnusedParameters(thread);
+
+		Debug.Trace(LogLevel::User, "%s", text.c_str());
 		return OR_CONTINUE;
 	}
 }

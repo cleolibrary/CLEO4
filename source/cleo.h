@@ -19,7 +19,7 @@ namespace CLEO
 {
     class CCleoInstance
     {
-        bool			m_bStarted;
+        bool m_bStarted;
 
     public:
         CDmaFix					DmaFix;
@@ -53,7 +53,7 @@ namespace CLEO
             //CreateDirectory("cleo/cleo_modules", NULL); // TODO: enbale if cleo_modules approved
             CreateDirectory("cleo/cleo_saves", NULL);
             CreateDirectory("cleo/cleo_text", NULL);
-            CodeInjector.OpenReadWriteAccess();		// must do this earlier to ensure plugins write access on init
+            CodeInjector.OpenReadWriteAccess(); // must do this earlier to ensure plugins write access on init
             GameMenu.Inject(CodeInjector);
             DmaFix.Inject(CodeInjector);
             UpdateGameLogics = VersionManager.TranslateMemoryAddress(MA_UPDATE_GAME_LOGICS_FUNCTION);

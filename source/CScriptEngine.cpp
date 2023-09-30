@@ -395,6 +395,7 @@ namespace CLEO
     void HOOK_DrawScriptStuff(char bBeforeFade)
     {
         GetInstance().ScriptEngine.DrawScriptStuff(bBeforeFade);
+        Debug.Draw(); // on screen log
 
         // restore SCM textures and return to the overwritten func (which may != DrawScriptSprites)
         return bBeforeFade ? DrawScriptStuff_H(bBeforeFade) : DrawScriptStuff(bBeforeFade);
