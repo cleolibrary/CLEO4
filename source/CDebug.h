@@ -34,6 +34,8 @@ private:
     LogLevel level;
     size_t maxMessages;
     float fontSize;
+    std::chrono::milliseconds timeDisplay;
+    std::chrono::milliseconds timeFadeout = std::chrono::milliseconds(3000);
 
     const RGBA fontColor[4] = {
         RGBA(0xDD, 0xDD, 0xDD, 0xEE), // None
@@ -41,9 +43,6 @@ private:
         RGBA(0xFF, 0xEE, 0x30, 0xEE), // User
         RGBA(0xDD, 0xDD, 0xDD, 0xEE), // Default
     };
-
-    std::chrono::milliseconds timeDisplay = std::chrono::milliseconds(6000);
-    std::chrono::milliseconds timeFadeout = std::chrono::milliseconds(3000);
 
     struct Entry
     {

@@ -2749,10 +2749,9 @@ namespace CLEO {
 	{
 		std::string formatStr(MAX_STR_LEN, '\0');
 		readString(thread, formatStr.data(), formatStr.length());
-		formatStr.resize(strlen(formatStr.c_str()));
 
 		std::string text(1024, '\0');
-		format(thread, text.data(), text.length(), formatStr.data());
+		format(thread, text.data(), text.length(), formatStr.c_str());
 		SkipUnusedParameters(thread);
 
 		Debug.Trace(LogLevel::User, "%s", text.c_str());
