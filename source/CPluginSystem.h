@@ -14,16 +14,15 @@ namespace CLEO
     public:
         CPluginSystem()
         {
-            TRACE("Unloading plugins...");
-            FilesWalk("cleo/*.cleo", [this](const char *libName) {
-                char libPath[MAX_PATH] = "cleo/";
-                strcat(libPath, libName);
-                TRACE("Loading plugin %s", libPath);
-                HMODULE hlib = LoadLibrary(libPath);
+            TRACE("Loading plugins...");
+            FilesWalk("cleo\\cleo_plugins", ".cleo", [this](const char *filename)
+            {
+                TRACE("Loading plugin %s", filename);
+                HMODULE hlib = LoadLibrary(filename);
                 if (!hlib)
                 {
                     char message[MAX_PATH + 40];
-                    sprintf(message, "Error loading plugin %s", libPath);
+                    sprintf(message, "Error loading plugin %s", filename);
                     Warning(message);
                 }
                 else plugins.push_back(hlib);
@@ -35,6 +34,6 @@ namespace CLEO
             std::for_each(plugins.begin(), plugins.end(), FreeLibrary);
         }
 
-        inline size_t		GetNumPlugins() { return plugins.size(); }
+        inline size_t GetNumPlugins() { return plugins.size(); }
     };
 }

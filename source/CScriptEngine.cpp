@@ -692,21 +692,17 @@ namespace CLEO
     {
         if (CGame::bMissionPackGame == 0) // regular main game
         {
-            //MainScriptFileDir = "0:\\data\\script"; // at user data TODO: enable when CLEO virtual paths available
-            MainScriptFileDir = CFileMgr::ms_rootDirName;
-            MainScriptFileDir += "data\\script";
-            
+            MainScriptFileDir = "0:\\data\\script"; // at game root dir
             MainScriptFileName = "main.scm";
         }
         else // mission pack
         {
-            //MainScriptFileDir = "1:\\MPACK\\MPACK"; // at user data TODO: enable when CLEO virtual paths available
-            MainScriptFileDir = CLEO::GetUserDirectory();
-            MainScriptFileDir += "\\MPACK\\MPACK";
+            MainScriptFileDir = "1:\\MPACK\\MPACK"; // at user data dir
             MainScriptFileDir += std::to_string(CGame::bMissionPackGame);
-
             MainScriptFileName = "scr.scm";
         }
+
+        MainScriptCurWorkDir = "0:"; // game root
     }
 
     void CScriptEngine::LoadCustomScripts(bool load_mode)
@@ -765,25 +761,25 @@ namespace CLEO
             memset(CleoVariables, 0, sizeof(CleoVariables));
         }
 
-        char cwd[MAX_PATH];
-        _getcwd(cwd, sizeof(cwd));
-        _chdir(cleo_dir);
+        // [game root]\cleo
+        std::string scriptsDir = CFileMgr::ms_rootDirName;
+        scriptsDir += "\\cleo";
 
         TRACE("Searching for cleo scripts");
 
-        FilesWalk(cs_mask, [this](const char *filename) {
+        FilesWalk(scriptsDir.c_str(), cs_ext, [this](const char *filename) {
             LoadScript(filename);
         });
-        FilesWalk(cs4_mask, [this](const char *filename) {
+
+        FilesWalk(scriptsDir.c_str(), cs4_ext, [this](const char *filename) {
             auto cs = LoadScript(filename);
             if (cs) cs->SetCompatibility(CLEO_VER_4);
         });
-        FilesWalk(cs3_mask, [this](const char *filename) {
+
+        FilesWalk(scriptsDir.c_str(), cs3_ext, [this](const char *filename) {
             auto cs = LoadScript(filename);
             if (cs) cs->SetCompatibility(CLEO_VER_3);
         });
-
-        _chdir(cwd);
     }
 
     CCustomScript * CScriptEngine::LoadScript(const char * szFilePath)
@@ -1023,7 +1019,7 @@ namespace CLEO
     CCustomScript::CCustomScript(const char *szFileName, bool bIsMiss, CCustomScript *parent, int label)
         : CRunningScript(), bSaveEnabled(false), bOK(false),
         LastSearchPed(0), LastSearchCar(0), LastSearchObj(0),
-        CompatVer(CLEO_VERSION)
+        CompatVer(CLEO_VER_CUR)
     {
         IsCustom(1);
         bIsMission = bUseMissionCleanup = bIsMiss;
@@ -1038,6 +1034,8 @@ namespace CLEO
         path = std::filesystem::absolute(path);
         scriptFileDir = path.parent_path().string();
         scriptFileName = path.filename().string();
+
+        workDir = "0:"; // game root
 
         try
         {

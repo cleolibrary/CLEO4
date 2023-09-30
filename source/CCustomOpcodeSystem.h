@@ -103,5 +103,6 @@ namespace CLEO
         RwTexture* WINAPI CLEO_GetScriptTextureById(CRunningScript* thread, int id);
         HSTREAM WINAPI CLEO_GetInternalAudioStream(CRunningScript* thread, CAudioStream* stream);
         CRunningScript* WINAPI CLEO_CreateCustomScript(CRunningScript* fromThread, const char* fileName, int label);
+        void WINAPI CLEO_ResolvePath(CRunningScript* thread, char* inOutPath, DWORD pathMaxLen);
     }
 }

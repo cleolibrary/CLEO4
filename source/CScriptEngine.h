@@ -4,10 +4,9 @@
 
 namespace CLEO
 {
-    const char cleo_dir[] = "./cleo";
-    const char cs_mask[] = "./*.cs";
-    const char cs4_mask[] = "./*.cs4";
-    const char cs3_mask[] = "./*.cs3";
+    const char cs_ext[] = ".cs";
+    const char cs4_ext[] = ".cs4";
+    const char cs3_ext[] = ".cs3";
 
     class CCustomScript : public CRunningScript
     {
@@ -31,6 +30,7 @@ namespace CLEO
 
         std::string scriptFileDir;
         std::string scriptFileName;
+        std::string workDir;
 
     public:
 		inline RwTexture* GetScriptTextureById(unsigned int id)
@@ -50,8 +50,8 @@ namespace CLEO
         inline void SetNotFlag(bool b) { NotFlag = b; }
         inline char GetNotFlag() { return NotFlag; }
         inline void IsCustom(bool b) { MemWrite<BYTE>(reinterpret_cast<BYTE*>(this) + 0xDF, b); }
-        inline bool IsCustom() { return MemRead<bool>(reinterpret_cast<BYTE*>(this) + 0xDF); }
-        inline bool IsOK() { return bOK; }
+        inline bool IsCustom() const { return MemRead<bool>(reinterpret_cast<const BYTE*>(this) + 0xDF); }
+        inline bool IsOK() const { return bOK; }
         inline void enable_saving(bool en = true) { bSaveEnabled = en; }
         inline void SetCompatibility(CLEO_Version ver) { CompatVer = ver; }
         inline CLEO_Version GetCompatibility() { return CompatVer; }
@@ -81,6 +81,10 @@ namespace CLEO
         // filename with type extension of script's source file
         const char* GetScriptFileName() const { return scriptFileName.c_str(); }
         void SetScriptFileName(const char* filename) { scriptFileName = filename; }
+
+        // current working directory of this script. Can be changed ith 0A99
+        const char* GetWorkDir() const { return workDir.c_str(); }
+        void SetWorkDir(const char* directory) { workDir = directory; }
     };
 
     class CScriptEngine : VInjectible
@@ -95,6 +99,7 @@ namespace CLEO
     public:
         std::string MainScriptFileDir;
         std::string MainScriptFileName;
+        std::string MainScriptCurWorkDir;
 
         static SCRIPT_VAR CleoVariables[0x400];
 

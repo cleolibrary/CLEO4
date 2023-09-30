@@ -6,8 +6,6 @@
 
 namespace CLEO
 {
-    const char CLEO_VERSION_STR[] = VERSION_STRING;
-
     void(__cdecl	* TextDraw)				(float x, float y, const char* text);
     void(__cdecl	* SetTextAlign)			(BYTE nAlign);
     void(__cdecl	* SetTextFont)			(BYTE nFont);
@@ -66,7 +64,7 @@ namespace CLEO
         auto cs_count = GetInstance().ScriptEngine.WorkingScriptsCount();
         auto plugin_count = GetInstance().PluginSystem.GetNumPlugins();
         std::ostringstream cleo_text;
-        cleo_text << "CLEO v" << CLEO_VERSION_STR;
+        cleo_text << "CLEO v" << CLEO_VERSION_DOT_STR;
 #ifdef _DEBUG
         cleo_text << " DEBUG";
 #endif

@@ -101,17 +101,11 @@ namespace CLEO
         return szResult;
     }
 
-    const char fxt_mask[] = "./*.fxt";
-    const char fxt_dir[] = "./cleo/cleo_text";
-
     CTextManager::CTextManager() : fxts(1, crc32FromUpcaseStdString)
     {
-        char cwd[MAX_PATH];
-        _getcwd(cwd, sizeof(cwd));
-        _chdir(fxt_dir);
-
         // parse FXT files
-        FilesWalk(fxt_mask, [this](const char *fname) {
+        FilesWalk("cleo\\cleo_text", ".fxt", [this](const char *fname)
+        {
             TRACE("Parsing FXT file %s", fname);
             try
             {
@@ -126,7 +120,6 @@ namespace CLEO
                 Warning(ss.str().c_str());
             }
         });
-        _chdir(cwd);
     }
 
     const char* CTextManager::Get(const char* key)

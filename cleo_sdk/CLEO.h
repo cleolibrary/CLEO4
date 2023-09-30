@@ -6,8 +6,7 @@
 
 #include <wtypes.h>
 
-#define CLEO_VERSION 0x04040400
-#define CLEO_VERSIONTEXT "4.4.4"
+#define CLEO_VERSION 0x04040500
 
 //result of CLEO_GetGameVersion()
 #define GV_US10 0	//1.0 us
@@ -139,6 +138,9 @@ CScriptThread* WINAPI CLEO_GetLastCreatedCustomScript();
 void WINAPI CLEO_AddScriptDeleteDelegate(FuncScriptDeleteDelegateT func);
 
 void WINAPI CLEO_RemoveScriptDeleteDelegate(FuncScriptDeleteDelegateT func);
+
+// convert to absolute file path
+void WINAPI CLEO_ResolvePath(CScriptThread* thread, char* inOutPath, DWORD pathMaxLen);
 
 #ifdef __cplusplus
 }

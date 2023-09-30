@@ -27,3 +27,4 @@ EXPORTS
 	_CLEO_GetLastCreatedCustomScript@0		@24
 	_CLEO_AddScriptDeleteDelegate@4			@25
 	_CLEO_RemoveScriptDeleteDelegate@4		@26
+	_CLEO_ResolvePath@12					@27

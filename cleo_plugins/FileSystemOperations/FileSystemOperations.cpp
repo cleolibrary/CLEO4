@@ -3,11 +3,14 @@
 
 using namespace plugin;
 
-class FileSystemOperations {
+class FileSystemOperations 
+{
 public:
-    FileSystemOperations() {
+    FileSystemOperations() 
+    {
         //check cleo version
-        if (CLEO_GetVersion() >= CLEO_VERSION) {
+        if (CLEO_GetVersion() >= CLEO_VERSION) 
+        {
             //register opcodes
             CLEO_RegisterOpcode(0x0B00, Script_FS_DeleteFile);
             CLEO_RegisterOpcode(0x0B01, Script_FS_DeleteDirectory);
@@ -27,8 +30,9 @@ public:
         ****************************************************************/
     {
         char FilePath[MAX_PATH];
-
         CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
+        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
+
         CLEO_SetThreadCondResult(thread, DeleteFile(FilePath));
 
         return OR_CONTINUE;
@@ -90,6 +94,8 @@ public:
         BOOL result;
 
         CLEO_ReadStringOpcodeParam(thread, DirPath, sizeof(DirPath));
+        CLEO_ResolvePath(thread, DirPath, sizeof(DirPath));
+
         DeleteAllInsideFlag = CLEO_GetIntOpcodeParam(thread);
 
         if (DeleteAllInsideFlag)
@@ -119,7 +125,10 @@ public:
         BOOL result;
 
         CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
+        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
+
         CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
+        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
 
         result = GetFileAttributes(FilePath) & FILE_ATTRIBUTE_DIRECTORY;
         if (!result)
@@ -141,7 +150,10 @@ public:
         BOOL result;
 
         CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
+        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
+
         CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
+        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
 
         result = GetFileAttributes(FilePath) & FILE_ATTRIBUTE_DIRECTORY;
         if (result)
@@ -164,7 +176,10 @@ public:
         DWORD fattr;
 
         CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
+        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
+
         CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
+        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
 
         if (result = CopyFile(FilePath, NewFilePath, FALSE))
         {
@@ -239,7 +254,11 @@ public:
         char NewFilePath[MAX_PATH];
 
         CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
+        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
+
         CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
+        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
+
         CLEO_SetThreadCondResult(thread, CopyDir(FilePath, NewFilePath));
 
         return OR_CONTINUE;

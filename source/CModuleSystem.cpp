@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "cleo.h"
 #include "CModuleSystem.h"
+#include "CFileMgr.h"
+#include "FileEnumerator.h"
 
 #include <chrono>
 #include <filesystem>
@@ -13,21 +15,20 @@ void CModuleSystem::Clear()
 	modules.clear();
 }
 
-const ScriptDataRef CModuleSystem::GetExport(const char* moduleName, const char* exportName)
+const ScriptDataRef CModuleSystem::GetExport(std::string modulePath, std::string_view exportName)
 {
-	std::string path(moduleName);
-	NormalizePath(path);
+	NormalizePath(modulePath);
 
-	auto& it = modules.find(path);
+	auto& it = modules.find(modulePath);
 	if (it == modules.end()) // module not loaded yet?
 	{
-		if (!LoadFile(path.c_str()))
+		if (!LoadFile(modulePath.c_str()))
 		{
 			return {};
 		}
 
 		// check if available now
-		it = modules.find(path);
+		it = modules.find(modulePath);
 		if (it == modules.end())
 		{
 			return {};
@@ -35,7 +36,7 @@ const ScriptDataRef CModuleSystem::GetExport(const char* moduleName, const char*
 	}
 	auto& module = it->second;
 
-	auto e = module.GetExport(exportName);
+	auto e = module.GetExport(std::string(exportName));
 	if (e.Valid())
 	{
 		module.refCount++;
@@ -59,31 +60,19 @@ bool CModuleSystem::LoadFile(const char* path)
 bool CModuleSystem::LoadDirectory(const char* path)
 {
 	bool result = true;
-
-	auto p = CLEO::ResolvePath(path); // actual absolute path
-	try
+	FilesWalk(path, ".s", [&](const char* filename)
 	{
-		for (auto& it : std::filesystem::recursive_directory_iterator(p))
-		{
-			auto& filePath = it.path();
-			if (filePath.extension() == ".s")
-			{
-				result &= LoadFile(filePath.string().c_str());
-			}
-		}
-	}
-	catch (const std::exception& ex)
-	{
-		TRACE("Error while iterating CLEO Modules: %s", ex.what());
-		return false;
-	}
+		result &= LoadFile(filename);
+	});
 
 	return result;
 }
 
 bool CModuleSystem::LoadCleoModules()
 {
-	return LoadDirectory("3:\\"); // cleo\cleo_modules
+	std::string path = CFileMgr::ms_rootDirName;
+	path += "\\cleo\\cleo_modules";
+	return LoadDirectory(path.c_str());
 }
 
 void CLEO::CModuleSystem::AddModuleRef(const char* baseIP)
@@ -359,12 +348,11 @@ bool CModuleSystem::CModule::LoadFromFile(const char* path)
 	return true;
 }
 
-const ScriptDataRef CModuleSystem::CModule::GetExport(const char* name)
+const ScriptDataRef CModuleSystem::CModule::GetExport(std::string name)
 {
-	auto normalized = std::string(name);
-	ModuleExport::NormalizeName(normalized);
+	ModuleExport::NormalizeName(name);
 
-	auto& it = exports.find(normalized);
+	auto& it = exports.find(name);
 	if (it == exports.end())
 	{
 		return {};

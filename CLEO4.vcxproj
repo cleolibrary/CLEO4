@@ -60,6 +60,7 @@
     <ClInclude Include="source\CGameVersionManager.h" />
     <ClInclude Include="source\CLegacy.h" />
     <ClInclude Include="source\cleo.h" />
+    <ClInclude Include="source\CleoVersion.h" />
     <ClInclude Include="source\CModuleSystem.h" />
     <ClInclude Include="source\CPluginSystem.h" />
     <ClInclude Include="source\crc32.h" />
@@ -110,15 +111,15 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>$(SolutionDir)output\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\.obj\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir).output\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir).output\.obj\$(Configuration)\</IntDir>
     <TargetName>CLEO</TargetName>
     <TargetExt>.asi</TargetExt>
     <IncludePath>$(PLUGIN_SDK_DIR)\shared\;$(PLUGIN_SDK_DIR)\shared\game\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>$(SolutionDir)output\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)output\.obj\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir).output\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir).output\.obj\$(Configuration)\</IntDir>
     <TargetName>CLEO</TargetName>
     <TargetExt>.asi</TargetExt>
     <IncludePath>$(PLUGIN_SDK_DIR)\shared\;$(PLUGIN_SDK_DIR)\shared\game\;$(IncludePath)</IncludePath>

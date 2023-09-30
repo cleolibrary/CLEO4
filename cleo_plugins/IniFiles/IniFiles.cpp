@@ -1,11 +1,14 @@
 #include <cstdio>
 #include "CLEO.h"
 
-class IniFiles {
+class IniFiles
+{
 public:
-	IniFiles() {
+	IniFiles()
+	{
 		//check cleo version
-		if (CLEO_GetVersion() >= CLEO_VERSION) {
+		if (CLEO_GetVersion() >= CLEO_VERSION)
+		{
 			// register opcodes
 			CLEO_RegisterOpcode(0x0AF0, Script_InifileGetInt);
 			CLEO_RegisterOpcode(0x0AF1, Script_InifileWriteInt);
@@ -18,30 +21,13 @@ public:
 			MessageBox(HWND_DESKTOP, "An incorrect version of CLEO was loaded.", "IniFiles.cleo", MB_ICONERROR);
 	}
 
-	static char* MakeFullPath(char *path, char *dst)
-	{
-		if (path[1] != ':')
-		{
-			//get current working directory
-			GetCurrentDirectory(MAX_PATH, dst);
-			strcat(dst, "\\");
-			strcat(dst, path);
-		}
-		else
-		{
-			strcpy(dst, path);
-		}
-		return dst;
-	}
-
 	static OpcodeResult WINAPI Script_InifileGetInt(CScriptThread* thread)
 		/****************************************************************
 		Opcode Format
 		0AF0=4,%4d% = get_int_from_ini_file %1s% section %2s% key %3s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
-		char path[100];
+		char path[MAX_PATH];
 		char sectionName[100];
 		char key[100];
 		int result;
@@ -50,10 +36,9 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, GetPrivateProfileInt() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		CLEO_ResolvePath(thread, path, sizeof(path)); // convert to absolute path
 
-		result = GetPrivateProfileInt(sectionName, key, 0x80000000, iniPath);
+		result = GetPrivateProfileInt(sectionName, key, 0x80000000, path);
 		CLEO_SetIntOpcodeParam(thread, result);
 		CLEO_SetThreadCondResult(thread, result != 0x80000000);
 
@@ -66,8 +51,7 @@ public:
 		0AF1=4,write_int %1d% to_ini_file %2s% section %3s% key %4s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
-		char path[100];
+		char path[MAX_PATH];
 		char sectionName[100];
 		char key[100];
 		DWORD value;
@@ -79,10 +63,9 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, WritePrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		CLEO_ResolvePath(thread, path, sizeof(path)); // convert to absolute path
 
-		result = WritePrivateProfileString(sectionName, key, _itoa(value, strValue, 10), iniPath);
+		result = WritePrivateProfileString(sectionName, key, _itoa(value, strValue, 10), path);
 		CLEO_SetThreadCondResult(thread, result);
 
 		return OR_CONTINUE;
@@ -94,8 +77,7 @@ public:
 		0AF2=4,%4d% = get_float_from_ini_file %1s% section %2s% key %3s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
-		char path[100];
+		char path[MAX_PATH];
 		char sectionName[100];
 		char key[100];
 		float value = 0.0f;
@@ -106,10 +88,9 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, GetPrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		CLEO_ResolvePath(thread, path, sizeof(path)); // convert to absolute path
 
-		result = GetPrivateProfileString(sectionName, key, NULL, strValue, sizeof(strValue), iniPath);
+		result = GetPrivateProfileString(sectionName, key, NULL, strValue, sizeof(strValue), path);
 		if (result)
 		{
 			value = (float)atof(strValue);
@@ -129,8 +110,7 @@ public:
 		0AF3=4,write_float %1d% to_ini_file %2s% section %3s% key %4s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
-		char path[100];
+		char path[MAX_PATH];
 		char sectionName[100];
 		char key[100];
 		float value;
@@ -142,12 +122,11 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, WritePrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		CLEO_ResolvePath(thread, path, sizeof(path)); // convert to absolute path
 
 		sprintf(strValue, "%g", value);
 
-		result = WritePrivateProfileString(sectionName, key, strValue, iniPath);
+		result = WritePrivateProfileString(sectionName, key, strValue, path);
 		CLEO_SetThreadCondResult(thread, result);
 
 		return OR_CONTINUE;
@@ -159,8 +138,7 @@ public:
 		0AF4=4,%4d% = read_string_from_ini_file %1s% section %2s% key %3s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
-		char path[100];
+		char path[MAX_PATH];
 		char sectionName[100];
 		char key[100];
 		char strValue[100];
@@ -171,10 +149,9 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, GetPrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		CLEO_ResolvePath(thread, path, sizeof(path)); // convert to absolute path
 
-		result = GetPrivateProfileString(sectionName, key, NULL, strValue, sizeof(strValue), iniPath);
+		result = GetPrivateProfileString(sectionName, key, NULL, strValue, sizeof(strValue), path);
 		if (result)
 		{
 			switch (CLEO_GetOperandType(thread))
@@ -204,12 +181,10 @@ public:
 		0AF5=4,write_string %1s% to_ini_file %2s% section %3s% key %4s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
-		char path[100];
+		char path[MAX_PATH];
 		char sectionName[100];
 		char key[100];
 		char strValue[100];
-		char *strptr;
 		BOOL result;
 
 		CLEO_ReadStringPointerOpcodeParam(thread, strValue, sizeof(strValue));
@@ -217,10 +192,9 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, WritePrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		CLEO_ResolvePath(thread, path, sizeof(path)); // convert to absolute path
 
-		result = WritePrivateProfileString(sectionName, key, strValue, iniPath);
+		result = WritePrivateProfileString(sectionName, key, strValue, path);
 
 		CLEO_SetThreadCondResult(thread, result);
 

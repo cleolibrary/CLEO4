@@ -6,6 +6,7 @@
 #include "CDebug.h"
 #include "CDmaFix.h"
 #include "CGameMenu.h"
+#include "CleoVersion.h"
 #include "CModuleSystem.h"
 #include "CPluginSystem.h"
 #include "CScriptEngine.h"
@@ -71,9 +72,6 @@ namespace CLEO
     };
 
     CCleoInstance& GetInstance();
-
-    // get absolute path
-    std::string ResolvePath(const char* path, const char* workDir = nullptr);
 }
 
 #endif

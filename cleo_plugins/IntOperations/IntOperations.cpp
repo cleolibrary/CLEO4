@@ -3,11 +3,14 @@
 
 using namespace plugin;
 
-class IntOperations {
+class IntOperations
+{
 public:
-    IntOperations() {
+    IntOperations()
+    {
         //check cleo version
-        if (CLEO_GetVersion() >= CLEO_VERSION) {
+        if (CLEO_GetVersion() >= CLEO_VERSION)
+        {
             //register opcodes
             CLEO_RegisterOpcode(0x0B10, Script_IntOp_AND);
             CLEO_RegisterOpcode(0x0B11, Script_IntOp_OR);

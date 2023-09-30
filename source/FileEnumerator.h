@@ -1,18 +1,31 @@
 #pragma once
+#include <filesystem>
 
 template<typename T>
-void FilesWalk(const char *file_mask, T cb)
+void FilesWalk(const char* directory, const char* extension, T callback)
 {
-    HANDLE hSearch = NULL;
-    WIN32_FIND_DATA wfd;
-    memset(&wfd, 0, sizeof(WIN32_FIND_DATA));
-
-    if ((hSearch = FindFirstFile(file_mask, &wfd)) == INVALID_HANDLE_VALUE) return;
-
-    do
+    try
     {
-        if (!(wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) cb(wfd.cFileName);
-    } while (FindNextFile(hSearch, &wfd));
+        for (auto& it : std::filesystem::directory_iterator(directory))
+        {
+            if (it.is_regular_file())
+            {
+                auto& filePath = it.path();
 
-    FindClose(hSearch);
+                if (extension != nullptr)
+                {
+                    if (_stricmp(filePath.extension().string().c_str(), extension) != 0)
+                    {
+                        continue;
+                    }
+                }
+
+                callback(std::filesystem::absolute(filePath).string().c_str());
+            }
+        }
+    }
+    catch (const std::exception& ex)
+    {
+        TRACE("Error while iterating directory: %s", ex.what());
+    }
 }

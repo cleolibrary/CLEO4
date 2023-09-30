@@ -24,7 +24,7 @@ namespace CLEO
 		void Clear();
 
 		// registers module reference. Needs to be released with ReleaseModuleRef
-		const ScriptDataRef GetExport(const char* moduleName, const char* exportName);
+		const ScriptDataRef GetExport(std::string modulePath, std::string_view exportName);
 
 		bool LoadFile(const char* const path); // single file
 		bool LoadDirectory(const char* const path); // all modules in directory
@@ -72,7 +72,7 @@ namespace CLEO
 			void Clear();
 			const char* GetFilepath() const;
 			bool LoadFromFile(const char* path);
-			const ScriptDataRef GetExport(const char* name);
+			const ScriptDataRef GetExport(std::string name);
 		};
 
 		std::map<std::string, CModule> modules;

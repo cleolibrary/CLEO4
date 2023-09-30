@@ -24,6 +24,12 @@ public:
     CDebug() : m_hFile(szLogFileName)
     {
         Trace("Log started.");
+
+#ifdef _DEBUG
+        Trace("CLEO v%s DEBUG", CLEO_VERSION_DOT_STR);
+#elif
+        Trace("CLEO v%s", CLEO_VERSION_DOT_STR);
+#endif
     }
 
     ~CDebug()

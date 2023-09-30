@@ -288,13 +288,20 @@ public:
         bWastedBustedCheck = 1;
     }
 
-    bool IsCustom(); // is it CLEO Script?
+    bool IsCustom() const; // is it CLEO Script?
 
     // absolute path to directory where script's source file is located
-    const char* GetScriptFileDir();
+    const char* GetScriptFileDir() const;
     void SetScriptFileDir(const char* directory);
 
     // filename with type extension of script's source file
-    const char* GetScriptFileName();
+    const char* GetScriptFileName() const;
     void SetScriptFileName(const char* filename);
+
+    // current working directory of this script. Can be changed ith 0A99
+    const char* GetWorkDir() const;
+    void SetWorkDir(const char* directory);
+
+    // convert to absolute path
+    std::string ResolvePath(const char* path, const char* customWorkDir = nullptr) const;
 };
