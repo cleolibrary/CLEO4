@@ -692,17 +692,17 @@ namespace CLEO
     {
         if (CGame::bMissionPackGame == 0) // regular main game
         {
-            MainScriptFileDir = "0:\\data\\script"; // at game root dir
+            MainScriptFileDir = std::string(DIR_GAME) + "\\data\\script";
             MainScriptFileName = "main.scm";
         }
         else // mission pack
         {
-            MainScriptFileDir = "1:\\MPACK\\MPACK"; // at user data dir
+            MainScriptFileDir = std::string(DIR_USER) + "\\MPACK\\MPACK";
             MainScriptFileDir += std::to_string(CGame::bMissionPackGame);
             MainScriptFileName = "scr.scm";
         }
 
-        MainScriptCurWorkDir = "0:"; // game root
+        MainScriptCurWorkDir = DIR_GAME;
     }
 
     void CScriptEngine::LoadCustomScripts(bool load_mode)

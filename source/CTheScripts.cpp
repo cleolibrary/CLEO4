@@ -96,29 +96,29 @@ std::string CRunningScript::ResolvePath(const char* path, const char* customWork
 
     // predefined CLEO paths starting with '[digit]:'
     if (result.length() < 2 || result[1] != ':' ||
-        result[0] < '0' || result[0] > '4') // supported range
+        result[0] < DIR_GAME[0] || result[0] > DIR_MODULES[0]) // supported range
     {
         return result; // not predefined path prefix found
     }
 
-    if (result[0] == '1') // 1: saves/settings location
+    if (result[0] == DIR_USER[0]) // saves/settings location
     {
         return std::string(GetUserDirectory()) + &result[2]; // original path without '1:' prefix;
     }
 
-    if (result[0] == '2') // 2: current script location
+    if (result[0] == DIR_SCRIPT[0]) // current script location
     {
         return std::string(GetScriptFileDir()) + &result[2]; // original path without '2:' prefix;
     }
 
-    // 0: game root directory
+    // game root directory
     std::string resolved = CFileMgr::ms_rootDirName;
 
-    if (result[0] == '3') // 2: cleo directory
+    if (result[0] == DIR_CLEO[0]) // cleo directory
     {
         resolved += "\\cleo";
     }
-    else if (result[0] == '4') // 3: cleo modules directory
+    else if (result[0] == DIR_MODULES[0]) // cleo modules directory
     {
         resolved += "\\cleo\\cleo_modules";
     }

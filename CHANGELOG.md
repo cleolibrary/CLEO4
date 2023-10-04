@@ -1,10 +1,10 @@
-## 4.4.5
+## 4.5.0
 
 - added opcode 0DD5 (get_platform)
 - updated project settings
 - plugins moved to cleo\cleo_plugins directory
 - rewriten Current Working Directory (editable with 0A99) handling. CWD changes are no longer affects internal game's processes and are not globally shared among all scripts.
-- introduced 'virtual absolute paths'. Use prefix in file path strings to access predefined locations: "0:\" game root, "1:\" game's save files directory, "2:\" this script's file directory, "3:\" cleo folder, "4:\" cleo\cleo_modules
+- introduced 'virtual absolute paths'. Use prefix in file path strings to access predefined locations: "0:\" game root, "1:\" game save files directory, "2:\" this script file directory, "3:\" cleo folder, "4:\" cleo\cleo_modules
 - new CLEO SDK export addded: CLEO_ResolvePath
 
 ## 4.4.4

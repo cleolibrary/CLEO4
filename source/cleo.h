@@ -18,6 +18,13 @@
 
 namespace CLEO
 {
+    // CLEO virtual paths prefixes. Expandable with ResolvePath
+    const char DIR_GAME[] = "0:"; // game root directory
+    const char DIR_USER[] = "1:"; // game save directory
+    const char DIR_SCRIPT[] = "2:"; // current script directory
+    const char DIR_CLEO[] = "3:"; // game\cleo directory
+    const char DIR_MODULES[] = "4:"; // game\cleo\modules directory
+
     class CCleoInstance
     {
         bool			m_bStarted;
@@ -51,10 +58,10 @@ namespace CLEO
         void Start()
         {
             CreateDirectory("cleo", NULL);
-            //CreateDirectory("cleo/cleo_modules", NULL); // TODO: enbale if cleo_modules approved
+            CreateDirectory("cleo/cleo_modules", NULL);
             CreateDirectory("cleo/cleo_saves", NULL);
             CreateDirectory("cleo/cleo_text", NULL);
-            CodeInjector.OpenReadWriteAccess();		// must do this earlier to ensure plugins write access on init
+            CodeInjector.OpenReadWriteAccess(); // must do this earlier to ensure plugins write access on init
             GameMenu.Inject(CodeInjector);
             DmaFix.Inject(CodeInjector);
             UpdateGameLogics = VersionManager.TranslateMemoryAddress(MA_UPDATE_GAME_LOGICS_FUNCTION);
