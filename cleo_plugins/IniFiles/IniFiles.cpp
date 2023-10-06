@@ -1,6 +1,8 @@
 #include <cstdio>
 #include "CLEO.h"
 
+using namespace CLEO;
+
 class IniFiles
 {
 public:
@@ -156,10 +158,10 @@ public:
 		{
 			switch (CLEO_GetOperandType(thread))
 			{
-			case globalVarVString:
-			case localVarVString:
-			case globalVarSString:
-			case localVarSString:
+			case DT_VAR_STRING:
+			case DT_LVAR_STRING:
+			case DT_VAR_TEXTLABEL:
+			case DT_LVAR_TEXTLABEL:
 				CLEO_WriteStringOpcodeParam(thread, strValue);
 				break;
 			default:

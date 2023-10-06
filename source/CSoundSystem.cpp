@@ -2,7 +2,7 @@
 #include "CSoundSystem.h"
 #include "bass.h"
 #include "CDebug.h"
-#include "cleo.h"
+#include "CleoBase.h"
 #include <windows.h>
 
 namespace CLEO

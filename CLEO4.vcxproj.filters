@@ -33,7 +33,7 @@
     <ClCompile Include="source\CLegacy.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\cleo.cpp">
+    <ClCompile Include="source\CleoBase.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\crc32.cpp">
@@ -60,9 +60,6 @@
     <ClCompile Include="source\CModuleSystem.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="source\CTheScripts.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CFileMgr.cpp">
       <Filter>plugin_sdk</Filter>
     </ClCompile>
@@ -80,6 +77,9 @@
     </ClCompile>
     <ClCompile Include="$(PLUGIN_SDK_DIR)\shared\PluginBase.cpp">
       <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="cleo_sdk\CLEO.cpp">
+      <Filter>cleo_sdk</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -104,7 +104,7 @@
     <ClInclude Include="source\CLegacy.h">
       <Filter>source</Filter>
     </ClInclude>
-    <ClInclude Include="source\cleo.h">
+    <ClInclude Include="source\CleoBase.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\CPluginSystem.h">
@@ -120,9 +120,6 @@
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\CTextManager.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CTheScripts.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\FileEnumerator.h">
@@ -141,9 +138,6 @@
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="source\CModuleSystem.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CleoVersion.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>

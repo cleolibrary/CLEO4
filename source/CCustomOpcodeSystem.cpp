@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "cleo.h"
+#include "CleoBase.h"
 #include "CLegacy.h"
 #include "CGameVersionManager.h"
 #include "CCustomOpcodeSystem.h"
@@ -883,8 +883,8 @@ namespace CLEO {
 			savedLogicalOp = cs->LogicalOp;
 			savedNotFlag = cs->NotFlag;
 
-			savedScriptFileDir = thread->GetScriptFileDir();
-			savedScriptFileName = thread->GetScriptFileName();
+			savedScriptFileDir = cs->GetScriptFileDir();
+			savedScriptFileName = cs->GetScriptFileName();
 
 			// init new scope
 			std::fill(std::begin(cs->Stack), std::end(cs->Stack), nullptr);
@@ -928,8 +928,8 @@ namespace CLEO {
 				cs->LogicalOp = savedLogicalOp;
 			}
 
-			thread->SetScriptFileDir(savedScriptFileDir.c_str());
-			thread->SetScriptFileName(savedScriptFileName.c_str());
+			cs->SetScriptFileDir(savedScriptFileDir.c_str());
+			cs->SetScriptFileName(savedScriptFileName.c_str());
 
 			cs->SetIp(retnAddress);
 			cs->SetScmFunction(prevScmFunctionId);
@@ -1044,7 +1044,7 @@ namespace CLEO {
 	//0A92=-1,create_custom_thread %1d%
 	OpcodeResult __stdcall opcode_0A92(CRunningScript *thread)
 	{
-		auto filename = thread->ResolvePath(readString(thread), DIR_CLEO); // legacy: default search location is game\cleo directory
+		auto filename = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(readString(thread), DIR_CLEO); // legacy: default search location is game\cleo directory
 		TRACE("[0A92] Starting new custom script %s from thread named %s", filename.c_str(), thread->GetName());
 
 		auto cs = new CCustomScript(filename.c_str());
@@ -1080,7 +1080,7 @@ namespace CLEO {
 	//0A94=-1,create_custom_mission %1d%
 	OpcodeResult __stdcall opcode_0A94(CRunningScript *thread)
 	{
-		auto filename = thread->ResolvePath(readString(thread), DIR_CLEO); // legacy: default search location is game\cleo directory
+		auto filename = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(readString(thread), DIR_CLEO); // legacy: default search location is game\cleo directory
 		filename += ".cm"; // add custom mission extension
 		TRACE("[0A94] Starting new custom mission %s from thread named %s", filename.c_str(), thread->GetName());
 
@@ -1150,11 +1150,11 @@ namespace CLEO {
 
 			std::string path = std::to_string(param);
 			path += ":";
-			thread->SetWorkDir(path.c_str());
+			reinterpret_cast<CCustomScript*>(thread)->SetWorkDir(path.c_str());
 		}
 		else
 		{
-			thread->SetWorkDir(readString(thread));
+			reinterpret_cast<CCustomScript*>(thread)->SetWorkDir(readString(thread));
 		}
 		return OR_CONTINUE;
 	}
@@ -1162,7 +1162,7 @@ namespace CLEO {
 	//0A9A=3,%3d% = openfile %1d% mode %2d% // IF and SET
 	OpcodeResult __stdcall opcode_0A9A(CRunningScript *thread)
 	{
-		auto filename = thread->ResolvePath(readString(thread));
+		auto filename = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(readString(thread));
 		auto paramType = *thread->GetBytePointer();
 		char mode[0x10];
 
@@ -1285,7 +1285,7 @@ namespace CLEO {
 	//0AA2=2,%2h% = load_library %1d% // IF and SET
 	OpcodeResult __stdcall opcode_0AA2(CRunningScript *thread)
 	{
-		auto filename = thread->ResolvePath(readString(thread));
+		auto filename = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(readString(thread));
 
 		auto libHandle = LoadLibrary(filename.c_str());
 		*thread << libHandle;
@@ -1588,7 +1588,7 @@ namespace CLEO {
 	//0AAB=1,  file_exists %1d%
 	OpcodeResult __stdcall opcode_0AAB(CRunningScript *thread)
 	{
-		auto filename = thread->ResolvePath(readString(thread));
+		auto filename = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(readString(thread));
 
 		DWORD fAttr = GetFileAttributes(filename.c_str());
 		SetScriptCondResult(thread, (fAttr != INVALID_FILE_ATTRIBUTES) && !(fAttr & FILE_ATTRIBUTE_DIRECTORY));
@@ -1598,7 +1598,7 @@ namespace CLEO {
 	//0AAC=2,  %2d% = load_audiostream %1d%  // IF and SET
 	OpcodeResult __stdcall opcode_0AAC(CRunningScript *thread)
 	{
-		auto filename = thread->ResolvePath(readString(thread));
+		auto filename = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(readString(thread));
 
 		auto stream = GetInstance().SoundSystem.LoadStream(filename.c_str());
 		*thread << stream;
@@ -1691,7 +1691,7 @@ namespace CLEO {
 			default:
 			{
 				std::string err(128, '\0');
-				sprintf(err.data(), "Invalid first argument type (%02X) of 0AB1 opcode in script '%s'", *thread->GetBytePointer(), thread->GetScriptFileName());
+				sprintf(err.data(), "Invalid first argument type (%02X) of 0AB1 opcode in script '%s'", *thread->GetBytePointer(), reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
 				Error(err.data());
 				return OR_INTERRUPT;
 			}
@@ -1707,7 +1707,7 @@ namespace CLEO {
 			if (pos == str.npos)
 			{
 				std::string err(128, '\0');
-				sprintf(err.data(), "Invalid module reference '%s' in 0AB1 opcode in script '%s'", moduleTxt, thread->GetScriptFileName());
+				sprintf(err.data(), "Invalid module reference '%s' in 0AB1 opcode in script '%s'", moduleTxt, reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
 				Error(err.data());
 				return OR_INTERRUPT;
 			}
@@ -1716,21 +1716,21 @@ namespace CLEO {
 
 			// get module's file absolute path
 			auto modulePath = std::string(strModule);
-			modulePath = thread->ResolvePath(modulePath.c_str(), DIR_SCRIPT); // by default search relative to current script location
+			modulePath = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(modulePath.c_str(), DIR_SCRIPT); // by default search relative to current script location
 
 			// get export reference
 			auto scriptRef = GetInstance().ModuleSystem.GetExport(modulePath, strExport);
 			if (!scriptRef.Valid())
 			{
 				std::string err(128, '\0');
-				sprintf(err.data(), "Not found module '%s' export '%s', requested by 0AB1 opcode in script '%s'", modulePath.c_str(), &str[0], thread->GetScriptFileName());
+				sprintf(err.data(), "Not found module '%s' export '%s', requested by 0AB1 opcode in script '%s'", modulePath.c_str(), &str[0], reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
 				Error(err.data());
 				return OR_INTERRUPT;
 			}
 			scmFunc->moduleExportRef = scriptRef.base; // to be released on return
 
-			thread->SetScriptFileDir(std::filesystem::path(modulePath).parent_path().string().c_str());
-			thread->SetScriptFileName(std::filesystem::path(modulePath).filename().string().c_str());
+			reinterpret_cast<CCustomScript*>(thread)->SetScriptFileDir(std::filesystem::path(modulePath).parent_path().string().c_str());
+			reinterpret_cast<CCustomScript*>(thread)->SetScriptFileName(std::filesystem::path(modulePath).filename().string().c_str());
 			thread->SetBaseIp(scriptRef.base);
 			label = scriptRef.offset;
 		}
@@ -1883,7 +1883,7 @@ namespace CLEO {
 	{
 		// steam offset is different, so get it manually for now
 		CGameVersionManager& gvm = GetInstance().VersionManager;
-		DWORD hMarker = gvm.GetGameVersion() != GV_STEAM ? MenuManager->m_nTargetBlipIndex : *((DWORD*)0xC3312C);
+		DWORD hMarker = gvm.GetGameVersion() !=  GV_STEAM ? MenuManager->m_nTargetBlipIndex : *((DWORD*)0xC3312C);
 		CMarker *pMarker;
 		if (hMarker && (pMarker = &RadarBlips[LOWORD(hMarker)]) && /*pMarker->m_nPoolIndex == HIWORD(hMarker) && */pMarker->m_nBlipDisplay)
 		{
@@ -2775,31 +2775,31 @@ extern "C"
 #pragma warning(pop)
 #endif
 
-	DWORD WINAPI CLEO_GetIntOpcodeParam(CRunningScript* thread)
+	DWORD WINAPI CLEO_GetIntOpcodeParam(CLEO::CRunningScript* thread)
 	{
 		DWORD result;
 		*thread >> result;
 		return result;
 	}
 
-	float WINAPI CLEO_GetFloatOpcodeParam(CRunningScript* thread)
+	float WINAPI CLEO_GetFloatOpcodeParam(CLEO::CRunningScript* thread)
 	{
 		float result;
 		*thread >> result;
 		return result;
 	}
 
-	void WINAPI CLEO_SetIntOpcodeParam(CRunningScript* thread, DWORD value)
+	void WINAPI CLEO_SetIntOpcodeParam(CLEO::CRunningScript* thread, DWORD value)
 	{
 		*thread << value;
 	}
 
-	void WINAPI CLEO_SetFloatOpcodeParam(CRunningScript* thread, float value)
+	void WINAPI CLEO_SetFloatOpcodeParam(CLEO::CRunningScript* thread, float value)
 	{
 		*thread << value;
 	}
 
-	LPSTR WINAPI CLEO_ReadStringOpcodeParam(CRunningScript* thread, char *buf, int size)
+	LPSTR WINAPI CLEO_ReadStringOpcodeParam(CLEO::CRunningScript* thread, char *buf, int size)
 	{
 		static char internal_buf[MAX_STR_LEN];
 		if (!buf) { buf = internal_buf; size = MAX_STR_LEN; }
@@ -2809,7 +2809,7 @@ extern "C"
 		return buf;
 	}
 
-	LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CRunningScript* thread, char *buf, int size)
+	LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CLEO::CRunningScript* thread, char *buf, int size)
 	{
 		static char internal_buf[MAX_STR_LEN];
 		if (!buf) { buf = internal_buf; size = MAX_STR_LEN; }
@@ -2818,19 +2818,19 @@ extern "C"
 		return readString(thread, buf, size);
 	}
 
-	void WINAPI CLEO_WriteStringOpcodeParam(CRunningScript* thread, LPCSTR str)
+	void WINAPI CLEO_WriteStringOpcodeParam(CLEO::CRunningScript* thread, LPCSTR str)
 	{
 		auto dst = (char *)GetScriptParamPointer(thread);
 		memcpy(dst, str, 16);
 		dst[15] = '\0';
 	}
 
-	void WINAPI CLEO_SetThreadCondResult(CRunningScript* thread, BOOL result)
+	void WINAPI CLEO_SetThreadCondResult(CLEO::CRunningScript* thread, BOOL result)
 	{
 		SetScriptCondResult(thread, result != FALSE);
 	}
 
-	void WINAPI CLEO_SkipOpcodeParams(CRunningScript* thread, int count)
+	void WINAPI CLEO_SkipOpcodeParams(CLEO::CRunningScript* thread, int count)
 	{
 		int len;
 		for (int i = 0; i < count; i++)
@@ -2874,32 +2874,32 @@ extern "C"
 		}
 	}
 
-	void WINAPI CLEO_ThreadJumpAtLabelPtr(CRunningScript* thread, int labelPtr)
+	void WINAPI CLEO_ThreadJumpAtLabelPtr(CLEO::CRunningScript* thread, int labelPtr)
 	{
 		ThreadJump(thread, labelPtr);
 	}
 
-	int WINAPI CLEO_GetOperandType(CRunningScript* thread)
+	int WINAPI CLEO_GetOperandType(CLEO::CRunningScript* thread)
 	{
 		return *thread->GetBytePointer();
 	}
 
-	void WINAPI CLEO_RetrieveOpcodeParams(CRunningScript *thread, int count)
+	void WINAPI CLEO_RetrieveOpcodeParams(CLEO::CRunningScript *thread, int count)
 	{
 		GetScriptParams(thread, count);
 	}
 
-	void WINAPI CLEO_RecordOpcodeParams(CRunningScript *thread, int count)
+	void WINAPI CLEO_RecordOpcodeParams(CLEO::CRunningScript *thread, int count)
 	{
 		SetScriptParams(thread, count);
 	}
 
-	SCRIPT_VAR * WINAPI CLEO_GetPointerToScriptVariable(CRunningScript* thread)
+	SCRIPT_VAR * WINAPI CLEO_GetPointerToScriptVariable(CLEO::CRunningScript* thread)
 	{
 		return GetScriptParamPointer(thread);
 	}
 
-	RwTexture * WINAPI CLEO_GetScriptTextureById(CRunningScript* thread, int id)
+	RwTexture * WINAPI CLEO_GetScriptTextureById(CLEO::CRunningScript* thread, int id)
 	{
 		CCustomScript* customScript = reinterpret_cast<CCustomScript*>(thread);
 		// We need to store-restore to update the texture list, not optimized, but this will not be used every frame anyway
@@ -2909,14 +2909,14 @@ extern "C"
 		return texture;
 	}
 
-	HSTREAM WINAPI CLEO_GetInternalAudioStream(CRunningScript* thread, CAudioStream *stream)
+	CLEO::HSTREAM WINAPI CLEO_GetInternalAudioStream(CLEO::CRunningScript* thread, DWORD stream) // arg CAudioStream *
 	{
-		return stream->GetInternal();
+		return ((CAudioStream*)stream)->GetInternal();
 	}
 
-	CRunningScript* WINAPI CLEO_CreateCustomScript(CRunningScript* fromThread, const char *script_name, int label)
+	CLEO::CRunningScript* WINAPI CLEO_CreateCustomScript(CLEO::CRunningScript* fromThread, const char *script_name, int label)
 	{
-		auto filename = fromThread->ResolvePath(script_name, DIR_CLEO); // legacy: default search location is game\cleo directory
+		auto filename = reinterpret_cast<CCustomScript*>(fromThread)->ResolvePath(script_name, DIR_CLEO); // legacy: default search location is game\cleo directory
 
 		if (label != 0) // create from label
 		{
@@ -2946,7 +2946,7 @@ extern "C"
 		return cs;
 	}
 
-	CRunningScript* WINAPI CLEO_GetLastCreatedCustomScript()
+	CLEO::CRunningScript* WINAPI CLEO_GetLastCreatedCustomScript()
 	{
 		return lastScriptCreated;
 	}
@@ -2961,14 +2961,14 @@ extern "C"
 		scriptDeleteDelegate -= func;
 	}
 
-	void WINAPI CLEO_ResolvePath(CRunningScript* thread, char* inOutPath, DWORD pathMaxLen)
+	void WINAPI CLEO_ResolvePath(CLEO::CRunningScript* thread, char* inOutPath, DWORD pathMaxLen)
 	{
 		if (thread == nullptr || inOutPath == nullptr || pathMaxLen < 1)
 		{
 			return; // invalid param
 		}
 
-		auto resolved = thread->ResolvePath(inOutPath);
+		auto resolved = reinterpret_cast<CCustomScript*>(thread)->ResolvePath(inOutPath);
 		
 		if (resolved.length() >= pathMaxLen)
 			resolved.resize(pathMaxLen - 1); // and terminator character

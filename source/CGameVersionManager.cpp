@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "CGameVersionManager.h"
-#include "CleoVersion.h"
 
 namespace CLEO
 {
@@ -138,18 +137,14 @@ namespace CLEO
 
     extern "C"
     {
-        eGameVersion __stdcall CLEO_GetGameVersion();
-
-        int __stdcall CLEO_GetVersion();
+        DWORD __stdcall CLEO_GetVersion()
+        {
+            return CLEO_VERSION;
+        }
 
         eGameVersion __stdcall CLEO_GetGameVersion()
         {
             return DetermineGameVersion();
-        }
-
-        int __stdcall CLEO_GetVersion()
-        {
-            return CLEO_VERSION;
         }
     }
 }

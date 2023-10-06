@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "cleo.h"
+#include "CleoBase.h"
 #include "CFileMgr.h"
 #include "CGame.h"
 
@@ -454,6 +454,7 @@ namespace CLEO
         if (auto script = GetCustomMission())
             script->Draw(bBeforeFade);
     }
+
     void CCustomScript::Process()
     {
         RestoreScriptSpecifics();
@@ -539,6 +540,107 @@ namespace CLEO
         }
         *useTextCommands = UseTextCommands;
     }
+
+    const char* CCustomScript::GetScriptFileDir() const 
+    {
+        if(!bIsCustom)
+            return GetInstance().ScriptEngine.MainScriptFileDir.c_str();
+
+        return scriptFileDir.c_str();
+    }
+
+    void CCustomScript::SetScriptFileDir(const char* directory)
+    {
+        if (!bIsCustom)
+            GetInstance().ScriptEngine.MainScriptFileDir = directory;
+        else
+            scriptFileDir = directory;
+    }
+
+    const char* CCustomScript::GetScriptFileName() const 
+    {
+        if (!bIsCustom)
+            return GetInstance().ScriptEngine.MainScriptFileName.c_str();
+
+        return scriptFileName.c_str();
+    }
+
+    void CCustomScript::SetScriptFileName(const char* filename) 
+    {
+        if (!bIsCustom)
+            GetInstance().ScriptEngine.MainScriptFileName = filename;
+        else
+            scriptFileName = filename;
+    }
+
+    const char* CCustomScript::GetWorkDir() const
+    {
+        if (!bIsCustom)
+            return GetInstance().ScriptEngine.MainScriptCurWorkDir.c_str();
+
+        return workDir.c_str(); 
+    }
+
+    void CCustomScript::SetWorkDir(const char* directory)
+    {
+        if (!bIsCustom)
+            GetInstance().ScriptEngine.MainScriptCurWorkDir = directory;
+        else
+            workDir = directory;
+    }
+
+    std::string CCustomScript::ResolvePath(const char* path, const char* customWorkDir) const
+    {
+        if (path == nullptr)
+        {
+            return {};
+        }
+
+        std::string result;
+        if (strlen(path) < 2 || path[1] != ':') // does not start with drive letter
+        {
+            result = (customWorkDir != nullptr) ? customWorkDir : GetWorkDir();
+            result.push_back('\\');
+            result += path;
+        }
+        else
+        {
+            result = path;
+        }
+
+        // predefined CLEO paths starting with '[digit]:'
+        if (result.length() < 2 || result[1] != ':' ||
+            result[0] < DIR_GAME[0] || result[0] > DIR_MODULES[0]) // supported range
+        {
+            return result; // not predefined path prefix found
+        }
+
+        if (result[0] == DIR_USER[0]) // saves/settings location
+        {
+            return std::string(GetUserDirectory()) + &result[2]; // original path without '1:' prefix;
+        }
+
+        if (result[0] == DIR_SCRIPT[0]) // current script location
+        {
+            return std::string(GetScriptFileDir()) + &result[2]; // original path without '2:' prefix;
+        }
+
+        // game root directory
+        std::string resolved = CFileMgr::ms_rootDirName;
+
+        if (result[0] == DIR_CLEO[0]) // cleo directory
+        {
+            resolved += "\\cleo";
+        }
+        else if (result[0] == DIR_MODULES[0]) // cleo modules directory
+        {
+            resolved += "\\cleo\\cleo_modules";
+        }
+
+        resolved += &result[2]; // original path without 'X:' prefix
+        return resolved;
+    }
+
     void CCustomScript::StoreScriptTextures()
     {
         // store this scripts textures + restore SCM textures + make sure this scripts textures arent cleared by another
@@ -1021,7 +1123,7 @@ namespace CLEO
         LastSearchPed(0), LastSearchCar(0), LastSearchObj(0),
         CompatVer(CLEO_VER_CUR)
     {
-        IsCustom(1);
+        bIsCustom = true;
         bIsMission = bUseMissionCleanup = bIsMiss;
         UseTextCommands = 0;
         NumDraws = 0;

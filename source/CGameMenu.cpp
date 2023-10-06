@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "CGameMenu.h"
-#include "cleo.h"
+#include "CleoBase.h"
 #include "CDebug.h"
 #include <sstream>
 
@@ -64,7 +64,7 @@ namespace CLEO
         auto cs_count = GetInstance().ScriptEngine.WorkingScriptsCount();
         auto plugin_count = GetInstance().PluginSystem.GetNumPlugins();
         std::ostringstream cleo_text;
-        cleo_text << "CLEO v" << CLEO_VERSION_DOT_STR;
+        cleo_text << "CLEO v" << CLEO_VERSION_STR;
 #ifdef _DEBUG
         cleo_text << " DEBUG";
 #endif

@@ -2,7 +2,7 @@
 #include "stdafx.h"
 #include "CDmaFix.h"
 #include "CGameVersionManager.h"
-#include "cleo.h"
+#include "CleoBase.h"
 
 namespace CLEO
 {

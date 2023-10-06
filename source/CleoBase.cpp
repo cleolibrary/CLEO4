@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "cleo.h"
+#include "CleoBase.h"
 
 
 namespace CLEO
@@ -16,3 +16,4 @@ namespace CLEO
         _asm jmp dwFunc
     }
 }
+

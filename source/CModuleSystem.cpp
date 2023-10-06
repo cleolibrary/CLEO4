@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "cleo.h"
+#include "CleoBase.h"
 #include "CModuleSystem.h"
 #include "CFileMgr.h"
 #include "FileEnumerator.h"

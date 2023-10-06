@@ -11,6 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="cleo_sdk\CLEO.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="source\CCodeInjector.cpp" />
     <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CFileMgr.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -36,13 +40,12 @@
     <ClCompile Include="source\CGameMenu.cpp" />
     <ClCompile Include="source\CGameVersionManager.cpp" />
     <ClCompile Include="source\CLegacy.cpp" />
-    <ClCompile Include="source\cleo.cpp" />
+    <ClCompile Include="source\CleoBase.cpp" />
     <ClCompile Include="source\CModuleSystem.cpp" />
     <ClCompile Include="source\crc32.cpp" />
     <ClCompile Include="source\CScriptEngine.cpp" />
     <ClCompile Include="source\CSoundSystem.cpp" />
     <ClCompile Include="source\CTextManager.cpp" />
-    <ClCompile Include="source\CTheScripts.cpp" />
     <ClCompile Include="source\dllmain.cpp" />
     <ClCompile Include="source\PluginSdkExternals.cpp" />
     <ClCompile Include="source\stdafx.cpp">
@@ -59,15 +62,13 @@
     <ClInclude Include="source\CGameMenu.h" />
     <ClInclude Include="source\CGameVersionManager.h" />
     <ClInclude Include="source\CLegacy.h" />
-    <ClInclude Include="source\cleo.h" />
-    <ClInclude Include="source\CleoVersion.h" />
+    <ClInclude Include="source\CleoBase.h" />
     <ClInclude Include="source\CModuleSystem.h" />
     <ClInclude Include="source\CPluginSystem.h" />
     <ClInclude Include="source\crc32.h" />
     <ClInclude Include="source\CScriptEngine.h" />
     <ClInclude Include="source\CSoundSystem.h" />
     <ClInclude Include="source\CTextManager.h" />
-    <ClInclude Include="source\CTheScripts.h" />
     <ClInclude Include="source\FileEnumerator.h" />
     <ClInclude Include="source\Mem.h" />
     <ClInclude Include="source\resource.h" />

@@ -4,17 +4,6 @@
 
 namespace CLEO
 {
-    enum eGameVersion
-    {
-        GV_US10,
-        GV_US11,
-        GV_EU10,
-        GV_EU11,
-        GV_STEAM,
-        GV_TOTAL,
-        GV_UNK = -1
-    };
-
     // returned by 0DD5: get_platform opcode
     enum ePlatform
     {

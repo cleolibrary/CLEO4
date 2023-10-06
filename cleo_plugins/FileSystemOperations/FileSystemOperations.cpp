@@ -1,6 +1,7 @@
 #include "plugin.h"
 #include "CLEO.h"
 
+using namespace CLEO;
 using namespace plugin;
 
 class FileSystemOperations 

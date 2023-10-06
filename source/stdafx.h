@@ -27,7 +27,7 @@
 #include <game_sa/CPlayerPed.h>
 #include <game_sa/CRadar.h>
 
-#include "CleoVersion.h"
+#include "..\cleo_sdk\CLEO.h"
 #include "CTheScripts.h"
 
 enum CLEO_Version

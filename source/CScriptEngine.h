@@ -49,8 +49,6 @@ namespace CLEO
         inline void SetScmFunction(WORD id) { MemWrite<WORD>(reinterpret_cast<BYTE*>(this) + 0xDD, id); }
         inline void SetNotFlag(bool b) { NotFlag = b; }
         inline char GetNotFlag() { return NotFlag; }
-        inline void IsCustom(bool b) { MemWrite<BYTE>(reinterpret_cast<BYTE*>(this) + 0xDF, b); }
-        inline bool IsCustom() const { return MemRead<bool>(reinterpret_cast<const BYTE*>(this) + 0xDF); }
         inline bool IsOK() const { return bOK; }
         inline void enable_saving(bool en = true) { bSaveEnabled = en; }
         inline void SetCompatibility(CLEO_Version ver) { CompatVer = ver; }
@@ -75,16 +73,19 @@ namespace CLEO
         void RestoreScriptCustoms();
 
         // absolute path to directory where script's source file is located
-        const char* GetScriptFileDir() const { return scriptFileDir.c_str(); }
-        void SetScriptFileDir(const char* directory) { scriptFileDir = directory; }
+        const char* GetScriptFileDir() const;
+        void SetScriptFileDir(const char* directory);
 
         // filename with type extension of script's source file
-        const char* GetScriptFileName() const { return scriptFileName.c_str(); }
-        void SetScriptFileName(const char* filename) { scriptFileName = filename; }
+        const char* GetScriptFileName() const;
+        void SetScriptFileName(const char* filename);
 
         // current working directory of this script. Can be changed ith 0A99
-        const char* GetWorkDir() const { return workDir.c_str(); }
-        void SetWorkDir(const char* directory) { workDir = directory; }
+        const char* GetWorkDir() const;
+        void SetWorkDir(const char* directory);
+
+        // create absolute file path
+        std::string ResolvePath(const char* path, const char* customWorkDir = nullptr) const;
     };
 
     class CScriptEngine : VInjectible
@@ -95,7 +96,7 @@ namespace CLEO
         std::set<unsigned long> InactiveScriptHashes;
         CCustomScript *CustomMission;
 
-        CCustomScript			*	LoadScript(const char *szFilePath);
+        CCustomScript *LoadScript(const char *szFilePath);
     public:
         std::string MainScriptFileDir;
         std::string MainScriptFileName;

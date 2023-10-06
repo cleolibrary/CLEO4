@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
 #include "CTextManager.h"
-#include "cleo.h"
+#include "CleoBase.h"
 #include "FileEnumerator.h"
 #include <fstream>
 #include <sstream>
