@@ -30,19 +30,6 @@
 #include "..\cleo_sdk\CLEO.h"
 #include "CTheScripts.h"
 
-enum CLEO_Version
-{
-    //CLEO_VER_1 = 0x01000000,
-    //CLEO_VER_2 = 0x02000000,
-    CLEO_VER_3 = 0x03000000,
-    CLEO_VER_4_MIN = 0x04000000,
-    CLEO_VER_4_2 = 0x04020000,
-    CLEO_VER_4_3 = 0x04030000,
-    CLEO_VER_4_4 = 0x04040000,
-    CLEO_VER_4 = CLEO_VER_4_4,
-    CLEO_VER_CUR = CLEO_VERSION,
-};
-
 #define CPOOL_USE_HANDLE_ACCESS
 
 //#define VALIDATE_SIZE(struc, size)	static_assert(sizeof(struc) == size, #struc " (Invalid Structure Size)")

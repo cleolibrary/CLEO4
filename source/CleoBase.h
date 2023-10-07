@@ -18,7 +18,8 @@ namespace CLEO
 {
     class CCleoInstance
     {
-        bool			m_bStarted;
+        bool m_bStarted;
+        std::map<eCallbackId, std::set<void*>> m_callbacks;
 
     public:
         CDmaFix					DmaFix;
@@ -33,40 +34,17 @@ namespace CLEO
         CPluginSystem			PluginSystem;
         //CLegacy				Legacy;
 
-        CCleoInstance()
-        {
-            m_bStarted = false;
-        }
+        CCleoInstance();
+        virtual ~CCleoInstance();
 
-        virtual ~CCleoInstance()
-        {
-            Stop();
-        }
+        void Start();
+        void Stop();
+
+        void AddCallback(eCallbackId id, void* func);
+        const std::set<void*>& GetCallbacks(eCallbackId id);
 
         void(__cdecl * UpdateGameLogics)();
         static void __cdecl OnUpdateGameLogics();
-
-        void Start()
-        {
-            CreateDirectory("cleo", NULL);
-            CreateDirectory("cleo/cleo_modules", NULL);
-            CreateDirectory("cleo/cleo_saves", NULL);
-            CreateDirectory("cleo/cleo_text", NULL);
-            CodeInjector.OpenReadWriteAccess(); // must do this earlier to ensure plugins write access on init
-            GameMenu.Inject(CodeInjector);
-            DmaFix.Inject(CodeInjector);
-            UpdateGameLogics = VersionManager.TranslateMemoryAddress(MA_UPDATE_GAME_LOGICS_FUNCTION);
-            CodeInjector.ReplaceFunction(&OnUpdateGameLogics, VersionManager.TranslateMemoryAddress(MA_CALL_UPDATE_GAME_LOGICS));
-            TextManager.Inject(CodeInjector);
-            SoundSystem.Inject(CodeInjector);
-            OpcodeSystem.Inject(CodeInjector);
-            ScriptEngine.Inject(CodeInjector);
-        }
-
-        void Stop()
-        {
-            if (!m_bStarted) return;
-        }
     };
 
     CCleoInstance& GetInstance();

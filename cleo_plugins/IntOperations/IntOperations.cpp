@@ -9,8 +9,8 @@ class IntOperations
 public:
     IntOperations()
     {
-        //check cleo version
-        if (CLEO_GetVersion() >= CLEO_VERSION)
+        auto cleoVer = CLEO_GetVersion();
+        if (cleoVer >= CLEO_VERSION)
         {
             //register opcodes
             CLEO_RegisterOpcode(0x0B10, Script_IntOp_AND);
@@ -29,7 +29,11 @@ public:
             CLEO_RegisterOpcode(0x0B1D, Scr_IntOp_SHL);
         }
         else
-            MessageBox(HWND_DESKTOP, "An incorrect version of CLEO was loaded.", "IntOpearations.cleo", MB_ICONERROR);
+        {
+            std::string err(MAX_STR_LEN, '\0');
+            sprintf(err.data(), "An incorrect version of CLEO (%X) was loaded. \nThis plugin requires version %X or later.", cleoVer, CLEO_VERSION);
+            MessageBox(HWND_DESKTOP, err.data(), "IniFiles.cleo", MB_ICONERROR);
+        }
     }
 
     static OpcodeResult WINAPI Script_IntOp_AND(CScriptThread* thread)

@@ -27,6 +27,7 @@ CRunningScript::CRunningScript()
 	bWastedOrBusted = 0;
 	SceneSkipIP = 0;
 	bIsMission = 0;
+	ScmFunction = 0;
 	bIsCustom = 0;
 }
 
@@ -76,6 +77,10 @@ char CRunningScript::GetByteVar(int i) const { return LocalVar[i].bParam; }
 
 bool CRunningScript::GetConditionResult() const { return bCondResult != 0; }
 
+bool CRunningScript::CRunningScript::GetNotFlag() const { return NotFlag; }
+
+void CRunningScript::CRunningScript::SetNotFlag(bool state) { NotFlag = state; }
+
 char CRunningScript::ReadDataType() { return ReadDataByte(); }
 
 short CRunningScript::ReadDataVarIndex() { return ReadDataWord(); }
@@ -111,15 +116,13 @@ int CRunningScript::ReadDataInt()
 	return i;
 }
 
-void CRunningScript::PushStack(BYTE* ptr)
-{
-	Stack[SP++] = ptr;
-}
+void CRunningScript::PushStack(BYTE* ptr) { Stack[SP++] = ptr; }
 
-BYTE* CRunningScript::PopStack()
-{
-	return Stack[--SP];
-}
+BYTE* CRunningScript::PopStack() { return Stack[--SP]; }
+
+WORD CRunningScript::GetScmFunction() const { return ScmFunction; }
+
+void CRunningScript::SetScmFunction(WORD id) { ScmFunction = id; }
 
 #endif // __cplusplus
 

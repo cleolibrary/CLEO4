@@ -155,7 +155,16 @@ namespace CLEO
     void(__cdecl * DrawScriptStuff_H)(char bBeforeFade);
 
     DWORD* GameTimer;
-    extern "C" {
+    extern "C"
+    {
+        eCLEO_Version WINAPI CLEO_GetScriptVersion(const CRunningScript* thread)
+        {
+            if (thread->IsCustom())
+                return reinterpret_cast<const CCustomScript*>(thread)->GetCompatibility();
+            else
+                return CLEO::eCLEO_Version::CLEO_VER_CUR;
+        }
+
         SCRIPT_VAR *opcodeParams;
         SCRIPT_VAR *missionLocals;
         CRunningScript *staticThreads;
@@ -189,6 +198,12 @@ namespace CLEO
         GetInstance().ModuleSystem.Clear();
         //GetInstance().ModuleSystem.LoadCleoModules(); // TODO: enbale if cleo_modules approved
         GetInstance().ScriptEngine.LoadCustomScripts(false);
+
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScmInit1))
+        {
+            typedef void WINAPI callback(void);
+            ((callback*)func)();
+        }
     }
 
     // called on first load before the others
@@ -201,6 +216,12 @@ namespace CLEO
         GetInstance().OpcodeSystem.FinalizeScriptObjects();
         GetInstance().SoundSystem.UnloadAllStreams();
         GetInstance().ScriptEngine.LoadCustomScripts();
+
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScmInit2))
+        {
+            typedef void WINAPI callback(void);
+            ((callback*)func)();
+        }
     }
 
     // called to load the scripts
@@ -213,6 +234,12 @@ namespace CLEO
         GetInstance().OpcodeSystem.FinalizeScriptObjects();
         GetInstance().SoundSystem.UnloadAllStreams();
         GetInstance().ScriptEngine.LoadCustomScripts(true);
+
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScmInit3))
+        {
+            typedef void WINAPI callback(void);
+            ((callback*)func)();
+        }
     }
 
     extern "C" void __stdcall opcode_004E(CCustomScript *pScript)
@@ -388,6 +415,17 @@ namespace CLEO
 
     void __fastcall HOOK_ProcessScript(CCustomScript * pScript, int)
     {
+        bool process = true;
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScriptProcess))
+        {
+            typedef bool WINAPI callback(CRunningScript*);
+            process = process && ((callback*)func)(pScript);
+        }
+        if (!process)
+        {
+            return; // skip this script
+        }
+
         if (pScript->IsCustom()) pScript->Process();
         else ProcessScript(pScript);
     }
@@ -395,6 +433,12 @@ namespace CLEO
     void HOOK_DrawScriptStuff(char bBeforeFade)
     {
         GetInstance().ScriptEngine.DrawScriptStuff(bBeforeFade);
+
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScriptDraw))
+        {
+            typedef void WINAPI callback(bool);
+            ((callback*)func)(bBeforeFade != 0);
+        }
 
         // restore SCM textures and return to the overwritten func (which may != DrawScriptSprites)
         return bBeforeFade ? DrawScriptStuff_H(bBeforeFade) : DrawScriptStuff(bBeforeFade);
@@ -882,6 +926,12 @@ namespace CLEO
             auto cs = LoadScript(filename);
             if (cs) cs->SetCompatibility(CLEO_VER_3);
         });
+
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScriptsLoaded))
+        {
+            typedef void WINAPI callback(void);
+            ((callback*)func)();
+        }
     }
 
     CCustomScript * CScriptEngine::LoadScript(const char * szFilePath)
@@ -1137,7 +1187,7 @@ namespace CLEO
         scriptFileDir = path.parent_path().string();
         scriptFileName = path.filename().string();
 
-        workDir = "0:"; // game root
+        workDir = DIR_GAME;
 
         try
         {

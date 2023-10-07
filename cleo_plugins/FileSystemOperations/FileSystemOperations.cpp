@@ -1,40 +1,156 @@
 #include "plugin.h"
 #include "CLEO.h"
 
+#include <set>
+
 using namespace CLEO;
 using namespace plugin;
 
 class FileSystemOperations 
 {
 public:
+    static std::set<HANDLE> m_hFileSearches;
+
+    static void WINAPI OnFinalizeScriptObjects()
+    {
+        // clean up file searches
+        for (auto handle : m_hFileSearches) FindClose(handle);
+        m_hFileSearches.clear();
+    }
+
     FileSystemOperations() 
     {
-        //check cleo version
-        if (CLEO_GetVersion() >= CLEO_VERSION) 
+        auto cleoVer = CLEO_GetVersion();
+        if (cleoVer >= CLEO_VERSION)
         {
             //register opcodes
+            CLEO_RegisterOpcode(0x0AAB, Script_FS_FileExists);
+            CLEO_RegisterOpcode(0x0AE4, Script_FS_DirectoryExists);
+            CLEO_RegisterOpcode(0x0AE5, Script_FS_CreateDirectory);
+            CLEO_RegisterOpcode(0x0AE6, Script_FS_FindFirstFile);
+            CLEO_RegisterOpcode(0x0AE7, Script_FS_FindNextFile);
+            CLEO_RegisterOpcode(0x0AE8, Script_FS_FindClose);
+
             CLEO_RegisterOpcode(0x0B00, Script_FS_DeleteFile);
             CLEO_RegisterOpcode(0x0B01, Script_FS_DeleteDirectory);
             CLEO_RegisterOpcode(0x0B02, Script_FS_MoveFile);
             CLEO_RegisterOpcode(0x0B03, Script_FS_MoveDir);
             CLEO_RegisterOpcode(0x0B04, Script_FS_CopyFile);
             CLEO_RegisterOpcode(0x0B05, Script_FS_CopyDir);
+
+            // register event callbacks
+            CLEO_RegisterCallback(eCallbackId::ScriptsFinalize, OnFinalizeScriptObjects);
         }
         else
-            MessageBox(HWND_DESKTOP, "An incorrect version of CLEO was loaded.", "FileSystemOperations.cleo", MB_ICONERROR);
+        {
+            std::string err(MAX_STR_LEN, '\0');
+            sprintf(err.data(), "An incorrect version of CLEO (%X) was loaded. \nThis plugin requires version %X or later.", cleoVer, CLEO_VERSION);
+            MessageBox(HWND_DESKTOP, err.data(), "FileSystemOperations.cleo", MB_ICONERROR);
+        }
     }
 
-    static OpcodeResult WINAPI Script_FS_DeleteFile(CScriptThread* thread)
-        /****************************************************************
-        Opcode Format
-        0B00=1,delete_file %1d% //IF and SET
-        ****************************************************************/
+    static std::string ReadPathParam(CRunningScript* thread)
     {
-        char FilePath[MAX_PATH];
-        CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
-        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
+        std::string path(MAX_STR_LEN, '\0');
+        CLEO_ReadStringOpcodeParam(thread, path.data(), MAX_STR_LEN);
+        CLEO_ResolvePath(thread, path.data(), MAX_STR_LEN);
+        path.resize(strlen(path.c_str()));
+        return path;
+    }
 
-        CLEO_SetThreadCondResult(thread, DeleteFile(FilePath));
+    // 0AAB=1, file_exists %1s%
+    static OpcodeResult WINAPI Script_FS_FileExists(CRunningScript* thread)
+    {
+        auto filename = ReadPathParam(thread);
+
+        DWORD fAttr = GetFileAttributes(filename.c_str());
+        bool exists = (fAttr != INVALID_FILE_ATTRIBUTES) && !(fAttr & FILE_ATTRIBUTE_DIRECTORY);
+
+        CLEO_SetThreadCondResult(thread, exists);
+        return OR_CONTINUE;
+    }
+
+    // 0AE4=1, directory_exist %1s%
+    static OpcodeResult WINAPI Script_FS_DirectoryExists(CRunningScript* thread)
+    {
+        auto filename = ReadPathParam(thread);
+
+        DWORD fAttr = GetFileAttributes(filename.c_str());
+        bool exists = (fAttr != INVALID_FILE_ATTRIBUTES) && (fAttr & FILE_ATTRIBUTE_DIRECTORY);
+
+        CLEO_SetThreadCondResult(thread, exists);
+        return OR_CONTINUE;
+    }
+
+    // 0AE5=1, create_directory %1s% //IF and SET
+    static OpcodeResult WINAPI Script_FS_CreateDirectory(CRunningScript* thread)
+    {
+        auto filename = ReadPathParam(thread);
+
+        bool result = CreateDirectory(filename.c_str(), NULL) != 0;
+
+        CLEO_SetThreadCondResult(thread, result);
+        return OR_CONTINUE;
+    }
+
+    // 0AE6=3, %2d% = find_first_file %1s% get_filename_to %3s% //IF and SET
+    static OpcodeResult WINAPI Script_FS_FindFirstFile(CRunningScript* thread)
+    {
+        auto filename = ReadPathParam(thread);
+        WIN32_FIND_DATA ffd = { 0 };
+        HANDLE handle = FindFirstFile(filename.c_str(), &ffd);
+
+        CLEO_SetIntOpcodeParam(thread, (DWORD)handle);
+
+        if (handle != INVALID_HANDLE_VALUE)
+        {
+            m_hFileSearches.insert(handle);
+
+            CLEO_WriteStringOpcodeParam(thread, ffd.cFileName);
+            CLEO_SetThreadCondResult(thread, true);
+        }
+        else
+        {
+            CLEO_SkipOpcodeParams(thread, 1);
+            CLEO_SetThreadCondResult(thread, false);
+        }
+        return OR_CONTINUE;
+    }
+
+    // 0AE7=2,%2s% = find_next_file %1d% //IF and SET
+    static OpcodeResult WINAPI Script_FS_FindNextFile(CRunningScript* thread)
+    {
+        auto handle = (HANDLE)CLEO_GetIntOpcodeParam(thread);
+
+        WIN32_FIND_DATA ffd = { 0 };
+        if (FindNextFile(handle, &ffd))
+        {
+            CLEO_WriteStringOpcodeParam(thread, ffd.cFileName);
+            CLEO_SetThreadCondResult(thread, true);
+        }
+        else
+        {
+            CLEO_SkipOpcodeParams(thread, 1);
+            CLEO_SetThreadCondResult(thread, false);
+        }
+        return OR_CONTINUE;
+    }
+
+    // 0AE8=1, find_close %1d%
+    static OpcodeResult WINAPI Script_FS_FindClose(CRunningScript* thread)
+    {
+        auto handle = (HANDLE)CLEO_GetIntOpcodeParam(thread);
+        FindClose(handle);
+        m_hFileSearches.erase(handle);
+        return OR_CONTINUE;
+    }
+
+    // 0B00=1, delete_file %1s% //IF and SET
+    static OpcodeResult WINAPI Script_FS_DeleteFile(CScriptThread* thread)
+    {
+        auto filename = ReadPathParam(thread);
+
+        CLEO_SetThreadCondResult(thread, DeleteFile(filename.c_str()));
 
         return OR_CONTINUE;
     }
@@ -84,112 +200,71 @@ public:
         return RemoveDirectory(path);
     }
 
+    // 0B01=1, delete_directory %1s% with_all_files_and_subdirectories %2d% //IF and SET
     static OpcodeResult WINAPI Script_FS_DeleteDirectory(CScriptThread* thread)
-        /****************************************************************
-        Opcode Format
-        0B01=1,delete_directory %1d% with_all_files_and_subdirectories %2d% //IF and SET
-        ****************************************************************/
     {
-        char DirPath[MAX_PATH];
-        int DeleteAllInsideFlag;
+        auto dirpath = ReadPathParam(thread);
+        int DeleteAllInsideFlag = CLEO_GetIntOpcodeParam(thread);
+
         BOOL result;
-
-        CLEO_ReadStringOpcodeParam(thread, DirPath, sizeof(DirPath));
-        CLEO_ResolvePath(thread, DirPath, sizeof(DirPath));
-
-        DeleteAllInsideFlag = CLEO_GetIntOpcodeParam(thread);
-
         if (DeleteAllInsideFlag)
         {
             //remove directory with all files and subdirectories
-            result = DeleteDir(DirPath);
+            result = DeleteDir(dirpath.c_str());
         }
         else
         {
             //try to remove as empty directory
-            result = RemoveDirectory(DirPath);
+            result = RemoveDirectory(dirpath.c_str());
         }
 
         CLEO_SetThreadCondResult(thread, result);
-
         return OR_CONTINUE;
     }
 
+    // 0B02=2, move_file %1s% to %2s% //IF and SET
     static OpcodeResult WINAPI Script_FS_MoveFile(CScriptThread* thread)
-        /****************************************************************
-        Opcode Format
-        0B02=2,move_file %1d% to %2d% //IF and SET
-        ****************************************************************/
     {
-        char FilePath[MAX_PATH];
-        char NewFilePath[MAX_PATH];
-        BOOL result;
+        auto filepath = ReadPathParam(thread);
+        auto newFilepath = ReadPathParam(thread);
 
-        CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
-        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
-
-        CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
-        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
-
-        result = GetFileAttributes(FilePath) & FILE_ATTRIBUTE_DIRECTORY;
+        BOOL result = GetFileAttributes(filepath.c_str()) & FILE_ATTRIBUTE_DIRECTORY;
         if (!result)
-            result = MoveFile(FilePath, NewFilePath);
+            result = MoveFile(filepath.c_str(), newFilepath.c_str());
 
         CLEO_SetThreadCondResult(thread, result);
-
         return OR_CONTINUE;
     }
 
+    // 0B03=2, move_directory %1s% to %2s% //IF and SET
     static OpcodeResult WINAPI Script_FS_MoveDir(CScriptThread* thread)
-        /****************************************************************
-        Opcode Format
-        0B03=2,move_directory %1d% to %2d% //IF and SET
-        ****************************************************************/
     {
-        char FilePath[MAX_PATH];
-        char NewFilePath[MAX_PATH];
-        BOOL result;
+        auto filepath = ReadPathParam(thread);
+        auto newFilepath = ReadPathParam(thread);
 
-        CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
-        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
-
-        CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
-        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
-
-        result = GetFileAttributes(FilePath) & FILE_ATTRIBUTE_DIRECTORY;
+        BOOL result = GetFileAttributes(filepath.c_str()) & FILE_ATTRIBUTE_DIRECTORY;
         if (result)
-            result = MoveFile(FilePath, NewFilePath);
+            result = MoveFile(filepath.c_str(), newFilepath.c_str());
 
         CLEO_SetThreadCondResult(thread, result);
-
         return OR_CONTINUE;
     }
 
+    // 0B04=2, copy_file %1s% to %2s% //IF and SET
     static OpcodeResult WINAPI Script_FS_CopyFile(CScriptThread* thread)
-        /****************************************************************
-        Opcode Format
-        0B04=2,copy_file %1d% to %2d% //IF and SET
-        ****************************************************************/
     {
-        char FilePath[MAX_PATH];
-        char NewFilePath[MAX_PATH];
-        BOOL result;
-        DWORD fattr;
+        auto filepath = ReadPathParam(thread);
+        auto newFilepath = ReadPathParam(thread);
 
-        CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
-        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
-
-        CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
-        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
-
-        if (result = CopyFile(FilePath, NewFilePath, FALSE))
+        BOOL result = CopyFile(filepath.c_str(), newFilepath.c_str(), FALSE);
+        if (result)
         {
-            //copy file attributes
-            fattr = GetFileAttributes(FilePath);
-            SetFileAttributes(NewFilePath, fattr);
+            // copy file attributes
+            DWORD fattr = GetFileAttributes(filepath.c_str());
+            SetFileAttributes(newFilepath.c_str(), fattr);
         }
-        CLEO_SetThreadCondResult(thread, result);
 
+        CLEO_SetThreadCondResult(thread, result);
         return OR_CONTINUE;
     }
 
@@ -245,23 +320,17 @@ public:
         return TRUE;
     }
 
+    // 0B05=2, copy_directory %1d% to %2d% //IF and SET
     static OpcodeResult WINAPI Script_FS_CopyDir(CScriptThread* thread)
-        /****************************************************************
-        Opcode Format
-        0B05=2,copy_directory %1d% to %2d% //IF and SET
-        ****************************************************************/
     {
-        char FilePath[MAX_PATH];
-        char NewFilePath[MAX_PATH];
+        auto filepath = ReadPathParam(thread);
+        auto newFilepath = ReadPathParam(thread);
 
-        CLEO_ReadStringOpcodeParam(thread, FilePath, sizeof(FilePath));
-        CLEO_ResolvePath(thread, FilePath, sizeof(FilePath));
+        BOOL result = CopyDir(filepath.c_str(), newFilepath.c_str());
 
-        CLEO_ReadStringOpcodeParam(thread, NewFilePath, sizeof(NewFilePath));
-        CLEO_ResolvePath(thread, NewFilePath, sizeof(NewFilePath));
-
-        CLEO_SetThreadCondResult(thread, CopyDir(FilePath, NewFilePath));
-
+        CLEO_SetThreadCondResult(thread, result);
         return OR_CONTINUE;
     }
 } fileSystemOperations;
+
+std::set<HANDLE> FileSystemOperations::m_hFileSearches;

@@ -18,7 +18,7 @@ namespace CLEO
         bool bSaveEnabled;
         bool bOK;
         DWORD LastSearchPed, LastSearchCar, LastSearchObj;
-        CLEO_Version CompatVer;
+        eCLEO_Version CompatVer;
         BYTE UseTextCommands;
         int NumDraws;
         int NumTexts;
@@ -45,14 +45,10 @@ namespace CLEO
 		}
 
         inline SCRIPT_VAR * GetVarsPtr() { return LocalVar; }
-        inline WORD GetScmFunction() { return MemRead<WORD>(reinterpret_cast<BYTE*>(this) + 0xDD); }
-        inline void SetScmFunction(WORD id) { MemWrite<WORD>(reinterpret_cast<BYTE*>(this) + 0xDD, id); }
-        inline void SetNotFlag(bool b) { NotFlag = b; }
-        inline char GetNotFlag() { return NotFlag; }
         inline bool IsOK() const { return bOK; }
         inline void enable_saving(bool en = true) { bSaveEnabled = en; }
-        inline void SetCompatibility(CLEO_Version ver) { CompatVer = ver; }
-        inline CLEO_Version GetCompatibility() { return CompatVer; }
+        inline void SetCompatibility(eCLEO_Version ver) { CompatVer = ver; }
+        inline eCLEO_Version GetCompatibility() const { return CompatVer; }
         inline DWORD& GetLastSearchPed() { return LastSearchPed; }
         inline DWORD& GetLastSearchVehicle() { return LastSearchCar; }
         inline DWORD& GetLastSearchObject() { return LastSearchObj; }

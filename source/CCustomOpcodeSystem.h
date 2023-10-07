@@ -24,46 +24,13 @@ namespace CLEO
         friend OpcodeResult __stdcall opcode_0AA3(CRunningScript *pScript);
         friend OpcodeResult __stdcall opcode_0AC8(CRunningScript *pScript);
         friend OpcodeResult __stdcall opcode_0AC9(CRunningScript *pScript);
-        friend OpcodeResult __stdcall opcode_0AE6(CRunningScript *pScript);
-        friend OpcodeResult __stdcall opcode_0AE8(CRunningScript *pScript);
 
     public:
         std::set<DWORD> m_hFiles;
         std::set<HMODULE> m_hNativeLibs;
-        std::set<HANDLE> m_hFileSearches;
         std::set<void *> m_pAllocations;
 
-        void FinalizeScriptObjects()
-        {
-            // clean up after opcode_0A99
-            _chdir("");
-            TRACE("Cleaning up script data... %u files, %u libs, %u file scans, %u allocations...",
-                m_hFiles.size(), m_hNativeLibs.size(), m_hFileSearches.size(), m_pAllocations.size()
-            );
-
-            // clean up after opcode_0A9A
-            for (auto i = m_hFiles.begin(); i != m_hFiles.end(); ++i)
-            {
-                if (!is_legacy_handle(*i))
-                    fclose(convert_handle_to_file(*i));
-            }
-            m_hFiles.clear();
-
-            // clean up after opcode_0AA2
-            std::for_each(m_hNativeLibs.begin(), m_hNativeLibs.end(), FreeLibrary);
-            m_hNativeLibs.clear();
-
-            // clean up file searches
-            std::for_each(m_hFileSearches.begin(), m_hFileSearches.end(), FindClose);
-            m_hFileSearches.clear();
-
-            // clean up after opcode_0AB1
-            ResetScmFunctionStore();
-
-            // clean up after opcode_0AC8
-            std::for_each(m_pAllocations.begin(), m_pAllocations.end(), free);
-            m_pAllocations.clear();
-        }
+        void FinalizeScriptObjects();
 
         virtual void Inject(CCodeInjector& inj);
         ~CCustomOpcodeSystem()
@@ -73,4 +40,9 @@ namespace CLEO
     };
 
     extern void(__thiscall * ProcessScript)(CRunningScript*);
+    
+    char* ReadStringParam(CRunningScript* thread, char* buf, BYTE size);
+    bool WriteStringParam(CRunningScript* thread, const char* str);
+    int ReadFormattedString(CRunningScript* thread, char* outputStr, size_t len, const char* format);
+    void SkipUnusedParameters(CRunningScript* thread); // for var-args opcodes
 }

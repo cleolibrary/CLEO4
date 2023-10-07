@@ -137,12 +137,12 @@ namespace CLEO
 
     extern "C"
     {
-        DWORD __stdcall CLEO_GetVersion()
+        DWORD WINAPI CLEO_GetVersion()
         {
             return CLEO_VERSION;
         }
 
-        eGameVersion __stdcall CLEO_GetGameVersion()
+        eGameVersion WINAPI CLEO_GetGameVersion()
         {
             return DetermineGameVersion();
         }

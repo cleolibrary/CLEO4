@@ -1,5 +1,6 @@
 #include <cstdio>
 #include "CLEO.h"
+#include <string>
 
 using namespace CLEO;
 
@@ -8,8 +9,8 @@ class IniFiles
 public:
 	IniFiles()
 	{
-		//check cleo version
-		if (CLEO_GetVersion() >= CLEO_VERSION)
+		auto cleoVer = CLEO_GetVersion();
+		if (cleoVer >= CLEO_VERSION)
 		{
 			// register opcodes
 			CLEO_RegisterOpcode(0x0AF0, Script_InifileGetInt);
@@ -20,7 +21,11 @@ public:
 			CLEO_RegisterOpcode(0x0AF5, Script_InifileWriteString);
 		}
 		else
-			MessageBox(HWND_DESKTOP, "An incorrect version of CLEO was loaded.", "IniFiles.cleo", MB_ICONERROR);
+		{
+			std::string err(MAX_STR_LEN, '\0');
+			sprintf(err.data(), "An incorrect version of CLEO (%X) was loaded. \nThis plugin requires version %X or later.", cleoVer, CLEO_VERSION);
+			MessageBox(HWND_DESKTOP, err.data(), "IniFiles.cleo", MB_ICONERROR);
+		}
 	}
 
 	static OpcodeResult WINAPI Script_InifileGetInt(CScriptThread* thread)
