@@ -1,5 +1,5 @@
 build/
-output/
+.output/
 *.APS
 *.VC.db
 *.VC.opendb

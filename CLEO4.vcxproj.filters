@@ -10,54 +10,24 @@
     <Filter Include="plugin_sdk">
       <UniqueIdentifier>{5cead5cc-9a75-4d2e-99b5-ebbc8f9d6d86}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\utils">
+      <UniqueIdentifier>{3104a2cb-d9c5-4eb5-9910-cf77d903db30}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\game_sa">
+      <UniqueIdentifier>{1b4011a1-a8c2-4ab1-a38b-b0e28120d24d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\core">
+      <UniqueIdentifier>{01a17d56-e9bb-4315-a808-63e91baaafaa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\extensions">
+      <UniqueIdentifier>{9c8be703-c930-47b1-b0cb-7c4b80922a48}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\CCodeInjector.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CCustomOpcodeSystem.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CDebug.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CDmaFix.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CGameMenu.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CGameVersionManager.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CLegacy.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CleoBase.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\crc32.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CScriptEngine.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CSoundSystem.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CTextManager.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="source\dllmain.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="source\stdafx.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\PluginSdkExternals.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="source\CModuleSystem.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CFileMgr.cpp">
@@ -81,63 +51,105 @@
     <ClCompile Include="cleo_sdk\CLEO.cpp">
       <Filter>cleo_sdk</Filter>
     </ClCompile>
+    <ClCompile Include="source\crc32.cpp">
+      <Filter>source\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\PluginSdkExternals.cpp">
+      <Filter>source\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CCodeInjector.cpp">
+      <Filter>source\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CDmaFix.cpp">
+      <Filter>source\game_sa</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CGameMenu.cpp">
+      <Filter>source\game_sa</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CGameVersionManager.cpp">
+      <Filter>source\game_sa</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CleoBase.cpp">
+      <Filter>source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CCustomOpcodeSystem.cpp">
+      <Filter>source\extensions</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CLegacy.cpp">
+      <Filter>source\extensions</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CModuleSystem.cpp">
+      <Filter>source\extensions</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CScriptEngine.cpp">
+      <Filter>source\core</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CSoundSystem.cpp">
+      <Filter>source\extensions</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CTextManager.cpp">
+      <Filter>source\game_sa</Filter>
+    </ClCompile>
+    <ClCompile Include="source\CDebug.cpp">
+      <Filter>source\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="source\CCodeInjector.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CCustomOpcodeSystem.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CDebug.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CDmaFix.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CGameMenu.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CGameVersionManager.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CLegacy.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CleoBase.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CPluginSystem.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\crc32.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CScriptEngine.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CSoundSystem.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\CTextManager.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\FileEnumerator.h">
-      <Filter>source</Filter>
-    </ClInclude>
-    <ClInclude Include="source\Mem.h">
-      <Filter>source</Filter>
-    </ClInclude>
     <ClInclude Include="source\stdafx.h">
       <Filter>source</Filter>
     </ClInclude>
     <ClInclude Include="cleo_sdk\CLEO.h">
       <Filter>cleo_sdk</Filter>
     </ClInclude>
-    <ClInclude Include="source\resource.h">
-      <Filter>source</Filter>
+    <ClInclude Include="source\crc32.h">
+      <Filter>source\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\FileEnumerator.h">
+      <Filter>source\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CCodeInjector.h">
+      <Filter>source\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CDmaFix.h">
+      <Filter>source\game_sa</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CGameMenu.h">
+      <Filter>source\game_sa</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CGameVersionManager.h">
+      <Filter>source\game_sa</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CleoBase.h">
+      <Filter>source\core</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CCustomOpcodeSystem.h">
+      <Filter>source\extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CLegacy.h">
+      <Filter>source\extensions</Filter>
     </ClInclude>
     <ClInclude Include="source\CModuleSystem.h">
+      <Filter>source\extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CPluginSystem.h">
+      <Filter>source\extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CScriptEngine.h">
+      <Filter>source\core</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CSoundSystem.h">
+      <Filter>source\extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CTextManager.h">
+      <Filter>source\game_sa</Filter>
+    </ClInclude>
+    <ClInclude Include="source\CDebug.h">
+      <Filter>source\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\Mem.h">
+      <Filter>source\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="source\resource.h">
       <Filter>source</Filter>
     </ClInclude>
   </ItemGroup>
