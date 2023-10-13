@@ -650,8 +650,6 @@ namespace CLEO {
 	// perform 'sprintf'-operation for parameters, passed through SCM
 	int ReadFormattedString(CRunningScript *thread, char *outputStr, size_t len, const char *format)
 	{
-		memset(outputStr, 0, len);
-
 		unsigned int written = 0;
 		const char *iter = format;
 		char bufa[256], fmtbufa[64], *fmta;
@@ -2370,7 +2368,7 @@ namespace CLEO {
 		else dst = &GetScriptParamPointer(thread)->cParam;
 
 		ReadStringParam(thread, fmt, sizeof(fmt));
-		ReadFormattedString(thread, dst, MAX_STR_LEN, fmt);
+		ReadFormattedString(thread, dst, MAX_STR_LEN, fmt); // TODO: get actual length limit based on target type
 		return OR_CONTINUE;
 	}
 

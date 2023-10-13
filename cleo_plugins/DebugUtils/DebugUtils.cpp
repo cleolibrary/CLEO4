@@ -113,7 +113,7 @@ public:
             for (size_t i = 0; i < KeyCount; i++)
             {
                 auto state = GetKeyState(KeyFirst + i);
-                if (state & 0x8000) // pressed
+                if (state & 0x8000) // key down
                 {
                     keysReleased = false;
                     break;
@@ -122,31 +122,29 @@ public:
         }
         else // ready for next press
         {
-            for (size_t i = 0; i < pausedScripts.size(); i++)
+            const size_t count = min(pausedScripts.size(), KeyCount);
+            for (size_t i = 0; i < count; i++)
             {
-                if (keysReleased && i < KeyCount)
+                auto state = GetKeyState(KeyFirst + i);
+                if (state & 0x8000) // key down
                 {
-                    auto state = GetKeyState(KeyFirst + i);
-                    if (state & 0x8000) // pressed
+                    keysReleased = false;
+
+                    std::stringstream ss;
+                    ss << "Script breakpoint ";
+                    if (!pausedScripts[i].msg.empty()) ss << "'" << pausedScripts[i].msg << "' ";
+                    ss << "released in '" << pausedScripts[i].ptr->GetName() << "'";
+                    CLEO_Log(eLogLevel::Debug, ss.str().c_str());
+
+                    if (CTimer::m_CodePause)
                     {
-                        keysReleased = false;
-
-                        std::stringstream ss;
-                        ss << "Script breakpoint ";
-                        if (!pausedScripts[i].msg.empty()) ss << "'" << pausedScripts[i].msg << "' ";
-                        ss << "released in '" << pausedScripts[i].ptr->GetName() << "'";
-                        CLEO_Log(eLogLevel::Debug, ss.str().c_str());
-
-                        if (CTimer::m_CodePause)
-                        {
-                            CLEO_Log(eLogLevel::Debug, "Game unpaused");
-                            CTimer::m_CodePause = false;
-                        }
-
-                        pausedScripts.erase(pausedScripts.begin() + i);
-
-                        break; // breakpoint continue
+                        CLEO_Log(eLogLevel::Debug, "Game unpaused");
+                        CTimer::m_CodePause = false;
                     }
+
+                    pausedScripts.erase(pausedScripts.begin() + i);
+
+                    break; // breakpoint continue
                 }
             }
         }
@@ -256,6 +254,7 @@ public:
     {
         auto filestr = CLEO_ReadStringOpcodeParam(thread);
 
+        // normalized absolute filepath
         std::string filename(MAX_PATH, '\0');
         const size_t len = strlen(filestr);
         for(size_t i = 0; i < len; i++)

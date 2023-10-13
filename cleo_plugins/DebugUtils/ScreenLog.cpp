@@ -30,11 +30,17 @@ void ScreenLog::Add(eLogLevel level, const char* msg)
     }
 
     // calculate end time
-    auto end = DWORD(0.3f * timeDisplay);
-    end += DWORD(0.7f * timeDisplay * strlen(msg) / 40); // assume 40 characters as baseline
-    end += GetTime();
+    auto duration = DWORD(0.2f * timeDisplay);
+    duration += DWORD(0.8f * timeDisplay * strlen(msg) / 40); // assume 40 characters as baseline
+    duration = min(duration, 3 * timeDisplay);
+    
+    /*auto startTime = GetTime();
+    if(!entries.empty()) startTime = entries.front().endTime;
+    entries.emplace_front(level, msg, startTime + duration);*/
 
-    entries.emplace_front(level, msg, end);
+    auto endTime = GetTime() + duration;
+    if (!entries.empty()) endTime = max(endTime, entries.front().endTime + 200);
+    entries.emplace_front(level, msg, endTime);
 
     if (entries.size() > maxMessages)
     {
@@ -42,7 +48,7 @@ void ScreenLog::Add(eLogLevel level, const char* msg)
     }
 
     // update scroll pos
-    float sizeY = fontSize * static_cast<float>(RsGlobal.maximumHeight) / 448.0f;
+    float sizeY = fontSize * RsGlobal.maximumHeight / 448.0f;
     size_t lines = CountLines(std::string(msg));
     scrollOffset += 18.0f * lines * sizeY;
 }
@@ -97,22 +103,19 @@ void ScreenLog::Draw()
     {
         auto& entry = entries[i];
 
-        // carry on from any following text that is longer
-        auto endTime = entry.endTime;
-        for (size_t j = i + 1; j < entries.size(); j++)
-        {
-            endTime = max(endTime, entries[j].endTime);
-        }
-
         BYTE alpha = 255;
-        if (endTime < now)
+        if (entry.endTime < now)
         {
-            auto elapsed = now - endTime;
+            auto elapsed = now - entry.endTime;
             float fadeProgress = (float)elapsed / timeFadeout;
             fadeProgress = std::clamp(fadeProgress, 0.0f, 1.0f);
             fadeProgress = 1.0f - fadeProgress; // fade out
             fadeProgress = sqrtf(fadeProgress);
             alpha = (BYTE)(fadeProgress * 0xFF);
+        }
+        else if(entry.endTime > (now + 4 * timeDisplay))
+        {
+             entry.endTime = now + 4 * timeDisplay;
         }
 
         auto color = fontColor[(size_t)entry.level];

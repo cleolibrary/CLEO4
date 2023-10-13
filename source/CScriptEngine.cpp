@@ -420,6 +420,7 @@ namespace CLEO
 
     void __fastcall HOOK_ProcessScript(CCustomScript * pScript, int)
     {
+        // run registered callbacks
         bool process = true;
         for (void* func : GetInstance().GetCallbacks(eCallbackId::ScriptProcess))
         {
