@@ -415,8 +415,7 @@ namespace CLEO {
 		CustomOpcodeHandler& dst = customOpcodeProc[opcode];
 		if (*dst != nullptr)
 		{
-			LOG_WARNING("Opcode [%04X] already registered! Skipping.", opcode);
-			return false;
+			LOG_WARNING("Opcode [%04X] already registered! Replacing...", opcode);
 		}
 
 		dst = callback;
