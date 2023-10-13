@@ -34,21 +34,23 @@ private:
     {
         eLogLevel level;
         std::string msg;
-        DWORD endTime;
+        float timeLeft;
 
         Entry() :
             level(eLogLevel::Default),
             msg(""),
-            endTime(0)
+            timeLeft(0.0f)
         {
         }
 
-        Entry(eLogLevel level, const char* msg, DWORD endTime) :
-            level(level),
-            endTime(endTime)
+        Entry(eLogLevel level, const char* msg, DWORD durationMs) :
+            level(level)
         {
             if(msg != nullptr)
             {
+                timeLeft = min(strlen(msg), 200) * 0.06f; // 17 letters peer second reading speed
+                timeLeft = max(timeLeft, 0.001f * durationMs);
+
                 auto len = strlen(msg);
                 this->msg.reserve(len);
 
@@ -61,6 +63,10 @@ private:
                     else
                         this->msg.push_back(c);
                 }
+            }
+            else
+            {
+                timeLeft = 0.0f;
             }
         }
     };

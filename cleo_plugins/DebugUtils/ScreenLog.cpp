@@ -18,7 +18,7 @@ void ScreenLog::Init()
     level = (eLogLevel)GetPrivateProfileInt("ScreenLog", "Level", (UINT)eLogLevel::None, config.c_str());
     maxMessages = GetPrivateProfileInt("ScreenLog", "MessagesMax", 40, config.c_str());
     timeDisplay = GetPrivateProfileInt("ScreenLog", "MessageTime", 6000, config.c_str());
-    timeFadeout = 2000;
+    timeFadeout = 3000;
     fontSize = 0.01f * GetPrivateProfileInt("ScreenLog", "FontSize", 60, config.c_str());
 }
 
@@ -29,18 +29,7 @@ void ScreenLog::Add(eLogLevel level, const char* msg)
         return;
     }
 
-    // calculate end time
-    auto duration = DWORD(0.2f * timeDisplay);
-    duration += DWORD(0.8f * timeDisplay * strlen(msg) / 40); // assume 40 characters as baseline
-    duration = min(duration, 3 * timeDisplay);
-    
-    /*auto startTime = GetTime();
-    if(!entries.empty()) startTime = entries.front().endTime;
-    entries.emplace_front(level, msg, startTime + duration);*/
-
-    auto endTime = GetTime() + duration;
-    if (!entries.empty()) endTime = max(endTime, entries.front().endTime + 200);
-    entries.emplace_front(level, msg, endTime);
+    entries.emplace_front(level, msg, timeDisplay);
 
     if (entries.size() > maxMessages)
     {
@@ -67,12 +56,10 @@ void ScreenLog::Draw()
         scrollOffset = 0.0f;
     prevTime = currTime;
 
-    const auto now = GetTime(); // miliseconds
-
     // clean up expired entries
     while(!entries.empty())
     {
-        if(entries.back().endTime + timeFadeout < now)
+        if(entries.back().timeLeft < (-0.001f * timeFadeout))
             entries.pop_back();
         else
             break;
@@ -99,24 +86,35 @@ void ScreenLog::Draw()
     float posX = 15.0f * sizeX;
     float posY = 7.0f * sizeY - scrollOffset;
 
-    for (size_t i = 0; i < entries.size(); i++)
+    // count total lines
+    int lines = 0;
+    for (auto& entry : entries)
     {
-        auto& entry = entries[i];
+        lines += CountLines(entry.msg);
+    }
 
+    float elapsed = 0.001f * (CTimer::m_snTimeInMilliseconds - CTimer::m_snPreviousTimeInMilliseconds);
+    float rowTime = -0.001f * timeFadeout;
+    for(auto it = entries.rbegin(); it != entries.rend(); it++)
+    {
+        auto& entry = *it;
+
+        if(entry.timeLeft > 0.0f && entry.timeLeft < elapsed)
+            entry.timeLeft = 0.0f; // do not skip fade
+        else
+            entry.timeLeft -= elapsed;
+
+        rowTime = max(rowTime, entry.timeLeft); // carred on from older entries
+        
         BYTE alpha = 255;
-        if (entry.endTime < now)
+        if (rowTime < 0)
         {
-            auto elapsed = now - entry.endTime;
-            float fadeProgress = (float)elapsed / timeFadeout;
+            float fadeProgress = -rowTime / (0.001f * timeFadeout);
             fadeProgress = std::clamp(fadeProgress, 0.0f, 1.0f);
             fadeProgress = 1.0f - fadeProgress; // fade out
             fadeProgress = sqrtf(fadeProgress);
             alpha = (BYTE)(fadeProgress * 0xFF);
-        }
-        else if(entry.endTime > (now + 4 * timeDisplay))
-        {
-             entry.endTime = now + 4 * timeDisplay;
-        }
+        };
 
         auto color = fontColor[(size_t)entry.level];
         alpha = min(alpha, color.a);
@@ -127,10 +125,9 @@ void ScreenLog::Draw()
         alpha = std::clamp(int(alpha * alpha) / 255, 0, 255); // corrected for fadeout
         CFont::SetDropColor(CRGBA(0, 0, 0, alpha));
 
-        CFont::PrintString(posX, posY, entry.msg.c_str());
-
-        size_t lines = CountLines(entry.msg);
-        posY += 18.0f * sizeY * lines;
+        lines -= CountLines(entry.msg);
+        float y = posY + 18.0f * sizeY * lines;
+        CFont::PrintString(posX, y, entry.msg.c_str());
     }
 }
 
