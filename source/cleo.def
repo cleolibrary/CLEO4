@@ -30,4 +30,8 @@ EXPORTS
 	_CLEO_ResolvePath@12					@27
 	_CLEO_GetScriptVersion@4				@28
 	_CLEO_RegisterCallback@8				@29
+	_CLEO_GetScriptDebugMode@4				@30
+	_CLEO_SetScriptDebugMode@8				@31
+	_CLEO_Log@8								@32
+	_CLEO_ReadParamsFormatted@16			@33
 

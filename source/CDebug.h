@@ -1,62 +1,38 @@
 #pragma once
 #include <mutex>
 
-#define TRACE __noop
-
-#ifdef DEBUGIT
-#undef TRACE
-#define TRACE(a,...) {Debug.Trace(a, __VA_ARGS__);}
-#endif
+#define TRACE(a,...) {Debug.Trace(CLEO::eLogLevel::Default, a, __VA_ARGS__);}
+#define LOG_WARNING(a,...) {Debug.Trace(CLEO::eLogLevel::Error, a, __VA_ARGS__);}
+#define SHOW_ERROR(a,...) {Debug.Error(a, __VA_ARGS__);}
 
 const char szLogFileName[] = "cleo.log";
 
 class CDebug
 {
-    std::mutex mutex;
-
-#ifdef DEBUGIT
-    std::ofstream m_hFile;
-#endif
-
 public:
-#ifdef DEBUGIT
-
     CDebug() : m_hFile(szLogFileName)
     {
-        Trace("Log started.");
+        Trace(CLEO::eLogLevel::Default, "Log started.");
 
 #ifdef _DEBUG
-        Trace("CLEO v%s DEBUG", CLEO_VERSION_STR);
+        Trace(CLEO::eLogLevel::Default, "CLEO v%s DEBUG", CLEO_VERSION_STR);
 #else
-        Trace("CLEO v%s", CLEO_VERSION_STR);
+        Trace(CLEO::eLogLevel::Default, "CLEO v%s", CLEO_VERSION_STR);
 #endif
     }
 
     ~CDebug()
     {
-        Trace("Log finished.");
+        Trace(CLEO::eLogLevel::Default, "Log finished.");
     }
-
-    void Trace(const char *format, ...)
-    {
-        std::lock_guard<std::mutex> guard(mutex);
-
-        SYSTEMTIME			t;
-        static char			szBuf[1024];
-
-        GetLocalTime(&t);
-        sprintf(szBuf, "%02d/%02d/%04d %02d:%02d:%02d.%03d ", t.wDay, t.wMonth, t.wYear, t.wHour, t.wMinute, t.wSecond, t.wMilliseconds);
-        va_list arg;
-        va_start(arg, format);
-        vsprintf(szBuf + strlen(szBuf), format, arg);
-        va_end(arg);
-        m_hFile << szBuf << std::endl;
-        OutputDebugString(szBuf);
-        OutputDebugString("\n");
-    }
-#endif
+    
+    void Trace(CLEO::eLogLevel level, const char* format, ...);
+    void Error(const char* format, ...);
+    
+private:
+    std::mutex mutex;
+    std::ofstream m_hFile;
+    const char* TraceVArg(CLEO::eLogLevel level, const char* format, va_list args);
 };
 
 extern CDebug Debug;
-void Warning(const char *);
-void Error(const char *);

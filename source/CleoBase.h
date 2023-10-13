@@ -34,11 +34,16 @@ namespace CLEO
         CPluginSystem			PluginSystem;
         //CLegacy				Legacy;
 
+        HWND MainWnd;
+        std::string ConfigFilename;
+
         CCleoInstance();
         virtual ~CCleoInstance();
 
         void Start();
         void Stop();
+
+        bool IsStarted() const { return m_bStarted; }
 
         void AddCallback(eCallbackId id, void* func);
         const std::set<void*>& GetCallbacks(eCallbackId id);

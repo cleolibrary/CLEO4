@@ -29,7 +29,7 @@ namespace CLEO
                 );
                 DWORD oldProtect, newProtect = (pSection->Characteristics & IMAGE_SCN_MEM_EXECUTE) ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
                 if (!VirtualProtect(pImageBase + pSection->VirtualAddress, dwPhysSize, newProtect, &oldProtect))
-                    Error("Virtual protect error");
+                    SHOW_ERROR("Virtual protect error");
             }
         }
 
@@ -60,7 +60,7 @@ namespace CLEO
                 );
                 DWORD oldProtect, newProtect = (pSection->Characteristics & IMAGE_SCN_MEM_EXECUTE) ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
                 if (!VirtualProtect(pImageBase + pSection->VirtualAddress, dwPhysSize, newProtect, &oldProtect))
-                    Error("Virtual protect error");
+                    SHOW_ERROR("Virtual protect error");
             }
         }
 

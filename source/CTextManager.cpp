@@ -114,10 +114,7 @@ namespace CLEO
             }
             catch (std::exception& ex)
             {
-                std::ostringstream ss;
-                ss << "Loading of FXT file " << fname << " failed\n";
-                ss << ex.what();
-                Warning(ss.str().c_str());
+                LOG_WARNING("Loading of FXT file '%s' failed: \n%s", fname, ex.what());
             }
         });
     }
@@ -139,7 +136,7 @@ namespace CLEO
         {
             if (!dynamic || fxt->second->is_static)
             {
-                TRACE("Attempting to add FXT \'%s\' - FAILED (GXT conflict)", key, value);
+                LOG_WARNING("Attempting to add FXT \'%s\' - FAILED (GXT conflict)", key, value);
                 return false;
             }
 

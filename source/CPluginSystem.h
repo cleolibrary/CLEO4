@@ -17,13 +17,11 @@ namespace CLEO
             TRACE("Loading plugins...");
             FilesWalk("cleo\\cleo_plugins", ".cleo", [this](const char *filename)
             {
-                TRACE("Loading plugin %s", filename);
+                TRACE("Loading plugin '%s'", filename);
                 HMODULE hlib = LoadLibrary(filename);
                 if (!hlib)
                 {
-                    char message[MAX_PATH + 40];
-                    sprintf(message, "Error loading plugin %s", filename);
-                    Warning(message);
+                    LOG_WARNING("Error loading plugin '%s'", filename);
                 }
                 else plugins.push_back(hlib);
             });

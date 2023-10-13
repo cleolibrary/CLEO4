@@ -44,7 +44,7 @@ namespace CLEO
             inj.Nop(0x4698F6, 3);
             break;
         default:
-            Error("CDmaFix::Inject(): Unimplemented game version.");
+            SHOW_ERROR("CDmaFix::Inject(): Unimplemented game version.");
         }
     }
 }

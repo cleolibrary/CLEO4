@@ -11,10 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="cleo_sdk\CLEO.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="source\CCodeInjector.cpp" />
     <ClCompile Include="$(PLUGIN_SDK_DIR)\plugin_sa\game_sa\CFileMgr.cpp">
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -76,6 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="source\cleo.def" />
+    <None Include="source\cleo_config.ini" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="source\CLEO4.rc" />

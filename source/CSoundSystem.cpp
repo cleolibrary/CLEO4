@@ -12,11 +12,13 @@ namespace CLEO
 
     HWND OnCreateMainWindow(HINSTANCE hinst)
     {
-        if (HIWORD(BASS_GetVersion()) != BASSVERSION) Error("An incorrect version of bass.dll has been loaded");
+        if (HIWORD(BASS_GetVersion()) != BASSVERSION) LOG_WARNING("An incorrect version of bass.dll has been loaded");
         TRACE("Creating main window...");
-        HWND wnd = CreateMainWindow(hinst);
-        if (!GetInstance().SoundSystem.Init(wnd)) TRACE("CSoundSystem::Init() failed. Error code: %d", BASS_ErrorGetCode());
-        return wnd;
+        auto mainWnd = CreateMainWindow(hinst);
+        if (!GetInstance().SoundSystem.Init(mainWnd)) SHOW_ERROR("CSoundSystem::Init() failed. Error code: %d", BASS_ErrorGetCode());
+
+        GetInstance().MainWnd = mainWnd;
+        return mainWnd;
     }
 
     CPlaceable *camera;
@@ -127,7 +129,7 @@ namespace CLEO
             BASS_Apply3D();
             return true;
         }
-        Warning("Could not initialize BASS sound system");
+        LOG_WARNING("Could not initialize BASS sound system");
         return false;
     }
 
@@ -231,7 +233,7 @@ namespace CLEO
         if (!(streamInternal = BASS_StreamCreateFile(FALSE, src, 0, 0, flags)) &&
             !(streamInternal = BASS_StreamCreateURL(src, 0, flags, 0, nullptr)))
         {
-            TRACE("Loading audiostream %s failed. Error code: %d", src, BASS_ErrorGetCode());
+            LOG_WARNING("Loading audiostream %s failed. Error code: %d", src, BASS_ErrorGetCode());
         }
         else OK = true;
     }
@@ -249,7 +251,7 @@ namespace CLEO
         if (!(streamInternal = BASS_StreamCreateFile(FALSE, src, 0, 0, flags)) &&
             !(streamInternal = BASS_StreamCreateURL(src, 0, flags, nullptr, nullptr)))
         {
-            TRACE("Loading 3d-audiostream %s failed. Error code: %d", src, BASS_ErrorGetCode());
+            LOG_WARNING("Loading 3d-audiostream %s failed. Error code: %d", src, BASS_ErrorGetCode());
         }
         else
         {

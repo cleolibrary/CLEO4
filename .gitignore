@@ -39,3 +39,6 @@ Debug/*
 Release/*
 ipch/
 .vs/
+*/.output
+*.zip
+/.output/*/*.lib

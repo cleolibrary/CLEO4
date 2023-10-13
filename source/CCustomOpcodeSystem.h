@@ -18,6 +18,24 @@ namespace CLEO
 
     class CCustomOpcodeSystem : public VInjectible
     {
+    public:
+        static const size_t LastOriginalOpcode = 0x0A4E; // GTA SA
+        static const size_t LastCustomOpcode = 0x7FFF;
+
+        void FinalizeScriptObjects();
+
+        CCustomOpcodeSystem();
+        virtual void Inject(CCodeInjector& inj);
+        ~CCustomOpcodeSystem()
+        {
+            //TRACE("Last opcode executed %04X at %s:%d", last_opcode, last_thread, last_off);
+        }
+
+        static bool RegisterOpcode(WORD opcode, CustomOpcodeHandler callback);
+
+        static OpcodeResult ErrorSuspendScript(CRunningScript* thread); // suspend script execution forever
+
+    private:
         friend OpcodeResult __stdcall opcode_0A9A(CRunningScript *pScript);
         friend OpcodeResult __stdcall opcode_0A9B(CRunningScript *pScript);
         friend OpcodeResult __stdcall opcode_0AA2(CRunningScript *pScript);
@@ -25,18 +43,21 @@ namespace CLEO
         friend OpcodeResult __stdcall opcode_0AC8(CRunningScript *pScript);
         friend OpcodeResult __stdcall opcode_0AC9(CRunningScript *pScript);
 
-    public:
         std::set<DWORD> m_hFiles;
         std::set<HMODULE> m_hNativeLibs;
-        std::set<void *> m_pAllocations;
+        std::set<void*> m_pAllocations;
 
-        void FinalizeScriptObjects();
+        typedef OpcodeResult(__thiscall* _OpcodeHandler)(CRunningScript* thread, WORD opcode);
 
-        virtual void Inject(CCodeInjector& inj);
-        ~CCustomOpcodeSystem()
-        {
-            //TRACE("Last opcode executed %04X at %s:%d", last_opcode, last_thread, last_off);
-        }
+        static const size_t OriginalOpcodeHandlersCount = (LastOriginalOpcode / 100) + 1; // 100 opcodes peer handler
+        static _OpcodeHandler originalOpcodeHandlers[OriginalOpcodeHandlersCount]; // backuped when patching
+
+        static const size_t CustomOpcodeHandlersCount = (LastCustomOpcode / 100) + 1; // 100 opcodes peer handler
+        static _OpcodeHandler customOpcodeHandlers[CustomOpcodeHandlersCount]; // original + new opcodes
+
+        static OpcodeResult __fastcall customOpcodeHandler(CRunningScript* thread, int dummy, WORD opcode); // universal CLEO's opcode handler
+
+        static CustomOpcodeHandler customOpcodeProc[LastCustomOpcode + 1]; // procedure for each opcode
     };
 
     extern void(__thiscall * ProcessScript)(CRunningScript*);

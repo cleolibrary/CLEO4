@@ -1,16 +1,29 @@
 ## 4.5.0
 
-- added opcode 0DD5 (get_platform)
+- introduced DebugUtils plugin
+- new opcode 00C3 (debug_on)
+- new opcode 00C4 (debug_off)
+- new opcode 00CC (breakpoint)
+- new opcode 00CD (trace)
+- new opcode 00CE (log_to_file)
+- new opcode 0DD5 (get_game_platform)
+- implemented support of opcodes 0662, 0663 and 0664 (original R* script debugging opcodes. See DebugUtils.ini)
 - updated project settings
 - plugins moved to cleo\cleo_plugins directory
 - opcodes 0AAB, 0AE4, 0AE5, 0AE1, 0AE2 and 0AE3 moved from CLEO to File plugin. Adding "{$USE FILE}" might be required to compile some scripts.
-- rewriten Current Working Directory (editable with 0A99) handling. CWD changes no longer affects internal game's processes and are not globally shared among all scripts.
+- rewritten Current Working Directory (editable with 0A99) handling. CWD changes no longer affects internal game's processes and are not globally shared among all scripts.
 - added more detailed error messages in some cases
+- on some errors instead of crashing game the invalid script is paused
 - updated general methods for getting and setting string parameters
 - introduced 'virtual absolute paths'. Use prefix in file path strings to access predefined locations: "0:\" game root, "1:\" game save files directory, "2:\" this script file directory, "3:\" cleo folder, "4:\" cleo\cleo_modules
-- new CLEO SDK export addded: CLEO_ResolvePath
-- new CLEO SDK export addded: CLEO_RegisterCallback
-- new CLEO SDK export addded: CLEO_GetScriptVersion
+- updated opcodes handling. Now all opcodes in range 0-7FFF can be registered by CLEO plugins
+- new CLEO SDK export: CLEO_ResolvePath
+- new CLEO SDK export: CLEO_RegisterCallback
+- new CLEO SDK export: CLEO_GetScriptVersion
+- new CLEO SDK export: CLEO_GetScriptDebugMode
+- new CLEO SDK export: CLEO_SetScriptDebugMode
+- new CLEO SDK export: CLEO_Log
+- new CLEO SDK export: CLEO_ReadParamsFormatted
 
 ## 4.4.4
 

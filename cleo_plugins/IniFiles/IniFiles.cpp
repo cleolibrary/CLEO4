@@ -22,9 +22,9 @@ public:
 		}
 		else
 		{
-			std::string err(MAX_STR_LEN, '\0');
-			sprintf(err.data(), "An incorrect version of CLEO (%X) was loaded. \nThis plugin requires version %X or later.", cleoVer, CLEO_VERSION);
-			MessageBox(HWND_DESKTOP, err.data(), "IniFiles.cleo", MB_ICONERROR);
+			std::string err(128, '\0');
+			sprintf(err.data(), "This plugin requires version %X or later! \nCurrent version of CLEO is %X.", CLEO_VERSION >> 8, cleoVer >> 8);
+			MessageBox(HWND_DESKTOP, err.data(), "IniFiles.cleo", MB_SYSTEMMODAL | MB_ICONERROR);
 		}
 	}
 

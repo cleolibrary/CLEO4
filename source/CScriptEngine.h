@@ -11,6 +11,7 @@ namespace CLEO
     class CCustomScript : public CRunningScript
     {
         friend class CScriptEngine;
+        friend class CCustomOpcodeSystem;
         friend struct ScmFunction;
         friend struct ThreadSavingInfo;
 
@@ -27,6 +28,8 @@ namespace CLEO
         std::list<RwTexture*> script_textures;
         std::vector<BYTE> script_draws;
         std::vector<BYTE> script_texts;
+
+        bool bDebugMode; // debug mode enabled?
 
         std::string scriptFileDir;
         std::string scriptFileName;
@@ -68,6 +71,10 @@ namespace CLEO
         void StoreScriptCustoms();
         void RestoreScriptCustoms();
 
+        // debug related utils enabled?
+        bool GetDebugMode() const;
+        void SetDebugMode(bool enabled);
+
         // absolute path to directory where script's source file is located
         const char* GetScriptFileDir() const;
         void SetScriptFileDir(const char* directory);
@@ -82,6 +89,9 @@ namespace CLEO
 
         // create absolute file path
         std::string ResolvePath(const char* path, const char* customWorkDir = nullptr) const;
+
+        // get short info text about script
+        std::string GetInfoStr(bool currLineInfo = true) const;
     };
 
     class CScriptEngine : VInjectible
@@ -94,6 +104,7 @@ namespace CLEO
 
         CCustomScript *LoadScript(const char *szFilePath);
     public:
+        bool NativeScriptsDebugMode; // debug mode enabled?
         std::string MainScriptFileDir;
         std::string MainScriptFileName;
         std::string MainScriptCurWorkDir;

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CleoBase.h"
+#include <filesystem>
 
 
 namespace CLEO
@@ -28,6 +29,10 @@ namespace CLEO
 
     void CCleoInstance::Start()
     {
+        if (m_bStarted) return; // already started
+
+        ConfigFilename = std::filesystem::current_path().append("cleo\\.cleo_config.ini").string();
+
         CreateDirectory("cleo", NULL);
         CreateDirectory("cleo/cleo_modules", NULL);
         CreateDirectory("cleo/cleo_saves", NULL);
@@ -41,11 +46,15 @@ namespace CLEO
         SoundSystem.Inject(CodeInjector);
         OpcodeSystem.Inject(CodeInjector);
         ScriptEngine.Inject(CodeInjector);
+
+        m_bStarted = true;
     }
 
     void CCleoInstance::Stop()
     {
         if (!m_bStarted) return;
+
+        m_bStarted = false;
     }
 
     void CCleoInstance::AddCallback(eCallbackId id, void* func)

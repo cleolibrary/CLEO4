@@ -48,9 +48,6 @@
     <ClCompile Include="$(PLUGIN_SDK_DIR)\shared\PluginBase.cpp">
       <Filter>plugin_sdk</Filter>
     </ClCompile>
-    <ClCompile Include="cleo_sdk\CLEO.cpp">
-      <Filter>cleo_sdk</Filter>
-    </ClCompile>
     <ClCompile Include="source\crc32.cpp">
       <Filter>source\utils</Filter>
     </ClCompile>
@@ -155,6 +152,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="source\cleo.def">
+      <Filter>source</Filter>
+    </None>
+    <None Include="source\cleo_config.ini">
       <Filter>source</Filter>
     </None>
   </ItemGroup>

@@ -1,6 +1,5 @@
 #pragma once
 #pragma warning(disable:4733)
-#define DEBUGIT
 #define _USE_MATH_DEFINES
 #define WIN32_LEAN_AND_MEAN
 #undef UNICODE

@@ -91,6 +91,17 @@ namespace CLEO
             SetLetterColor(RGBA(/*0xE1, 0xE1, 0xE1, 0xFF*/0xAD, 0xCE, 0xC4, 0xFF));
             TextDraw(CGameMenu_ScaleX(MenuManager, 6.0f), CGameMenu_ScaleY(MenuManager, 436.0f), cleo_text.str().c_str());
         }
+
+        // execute callbacks
+        auto& cleo = GetInstance();
+        if (cleo.IsStarted())
+        {
+            for (void* func : cleo.GetCallbacks(eCallbackId::MenuDraw))
+            {
+                typedef void WINAPI callback(void);
+                ((callback*)func)();
+            }
+        }
     }
 
     void CGameMenu::Inject(CCodeInjector& inj)

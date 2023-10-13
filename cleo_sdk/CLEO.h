@@ -121,15 +121,26 @@ const char DIR_CLEO[] = "3:"; // game\cleo directory
 const char DIR_MODULES[] = "4:"; // game\cleo\modules directory
 
 // argument of CLEO_RegisterCallback
-enum class eCallbackId
+enum class eCallbackId : DWORD
 {
 	ScmInit1, // void WINAPI OnScmInit1();
 	ScmInit2, // void WINAPI OnScmInit2();
 	ScmInit3, // void WINAPI OnScmInit3();
 	ScriptsLoaded, // void WINAPI OnScriptsLoaded();
 	ScriptsFinalize, // void WINAPI OnScriptsFinalize();
-	ScriptProcess, // bool WINAPI OnScriptProcess(CRunningScript* pScript, int); // return false to skip this script processing
+	ScriptProcess, // bool WINAPI OnScriptProcess(CRunningScript* pScript); // return false to skip this script processing
 	ScriptDraw, // void WINAPI OnScriptDraw(bool beforeFade);
+	MenuDraw, // void WINAPI OnMenuDraw();
+	Log, // void OnLog(eLogLevel level, const char* msg);
+};
+
+// used by CLEO_Log and Log callback
+enum class eLogLevel : DWORD
+{
+	None,
+	Error, // errors and warnings
+	Debug, // debug mode related
+	Default // all
 };
 
 typedef int SCRIPT_HANDLE;
@@ -177,53 +188,78 @@ struct CRunningScript
 
 #ifdef __cplusplus
 public:
-    CRunningScript();
+	CRunningScript()
+	{
+		strcpy(Name, "noname");
+		BaseIP = 0;
+		Previous = 0;
+		Next = 0;
+		CurrentIP = 0;
+		memset(Stack, 0, sizeof(Stack));
+		SP = 0;
+		WakeTime = 0;
+		bIsActive = 0;
+		bCondResult = 0;
+		bUseMissionCleanup = 0;
+		bIsExternal = 0;
+		bTextBlockOverride = 0;
+		bExternalType = -1;
+		memset(LocalVar, 0, sizeof(LocalVar));
+		LogicalOp = eLogicalOperation::NONE;
+		NotFlag = 0;
+		bWastedBustedCheck = 1;
+		bWastedOrBusted = 0;
+		SceneSkipIP = 0;
+		bIsMission = 0;
+		ScmFunction = 0;
+		bIsCustom = 0;
+	}
 
-    bool IsActive() const;
-    bool IsExternal() const;
-    bool IsMission() const;
-    bool IsCustom() const; // is this CLEO Script?
-    const char* GetName() const;
-    BYTE* GetBasePointer() const;
-    BYTE* GetBytePointer() const;
-    void SetIp(void* ip);
-    void SetBaseIp(void* ip);
-    CRunningScript* GetNext() const;
-    CRunningScript* GetPrev() const;
-    void SetIsExternal(bool b);
-    void SetActive(bool b);
-    void SetNext(CRunningScript* v);
-    void SetPrev(CRunningScript* v);
-    SCRIPT_VAR* GetVarPtr();
-    SCRIPT_VAR* GetVarPtr(int i);
-    int* GetIntVarPtr(int i);
-    int GetIntVar(int i) const;
-    void SetIntVar(int i, int v);
-    void SetFloatVar(int i, float v);
-    char GetByteVar(int i) const;
-    bool GetConditionResult() const;
-	bool GetNotFlag() const;
-	void SetNotFlag(bool state);
+	bool IsActive() const { return bIsActive; }
+	bool IsExternal() const { return bIsExternal; }
+	bool IsMission() const { return bIsMission; }
+	bool IsCustom() const { return bIsCustom; } // is this CLEO Script?
+	const char* GetName() const { return Name; }
+	BYTE* GetBasePointer() const { return (BYTE*)BaseIP; }
+	BYTE* GetBytePointer() const { return CurrentIP; }
+	void SetIp(void* ip) { CurrentIP = (BYTE*)ip; }
+	void SetBaseIp(void* ip) { BaseIP = ip; }
+	CRunningScript* GetNext() const { return Next; }
+	CRunningScript* GetPrev() const { return Previous; }
+	void SetIsExternal(bool b) { bIsExternal = b; }
+	void SetActive(bool b) { bIsActive = b; }
+	void SetNext(CRunningScript* v) { Next = v; }
+	void SetPrev(CRunningScript* v) { Previous = v; }
+	SCRIPT_VAR* GetVarPtr() { return LocalVar; }
+	SCRIPT_VAR* GetVarPtr(int i) { return &LocalVar[i]; }
+	int* GetIntVarPtr(int i) { return (int*)&LocalVar[i].dwParam; }
+	int GetIntVar(int i) const { return LocalVar[i].dwParam; }
+	void SetIntVar(int i, int v) { LocalVar[i].dwParam = v; }
+	void SetFloatVar(int i, float v) { LocalVar[i].fParam = v; }
+	char GetByteVar(int i) const { return LocalVar[i].bParam; }
+	bool GetConditionResult() const { return bCondResult != 0; }
+	bool GetNotFlag() const { return NotFlag; }
+	void SetNotFlag(bool state) { NotFlag = state; }
 
-    char ReadDataType();
-    short ReadDataVarIndex();
-    short ReadDataArrayOffset();
-    short ReadDataArrayIndex();
-    short ReadDataArraySize();
-    short ReadDataArrayFlags();
+	char ReadDataType() { return ReadDataByte(); }
+	short ReadDataVarIndex() { return ReadDataWord(); }
+	short ReadDataArrayOffset() { return ReadDataWord(); }
+	short ReadDataArrayIndex() { return ReadDataWord(); }
+	short ReadDataArraySize() { return ReadDataByte(); }
+	short ReadDataArrayFlags() { return ReadDataByte(); }
  
-    void IncPtr(int n = 1);
-    int ReadDataByte();
-    short ReadDataWord();
-    int ReadDataInt();
+	void IncPtr(int n = 1) { CurrentIP += n; }
+	int ReadDataByte() { char b = *CurrentIP; ++CurrentIP; return b; }
+	short ReadDataWord() { short v = *(short*)CurrentIP; CurrentIP += 2; return v; }
+	int ReadDataInt() { int i = *(int*)CurrentIP; CurrentIP += 4; return i; }
 
-    void PushStack(BYTE* ptr);
-    BYTE* PopStack();
+	void PushStack(BYTE* ptr) { Stack[SP++] = ptr; }
+	BYTE* PopStack() { return Stack[--SP]; }
 
-    WORD GetScmFunction() const;
-    void SetScmFunction(WORD id);
+	WORD GetScmFunction() const { return ScmFunction; }
+	void SetScmFunction(WORD id) { ScmFunction = id; }
 
-    #endif // __cplusplus
+#endif // __cplusplus
 };
 #pragma pack(pop)
 static_assert(sizeof(CRunningScript) == 0xE0, "Invalid size of CRunningScript!");
@@ -238,7 +274,8 @@ static_assert(sizeof(CRunningScript) == 0xE0, "Invalid size of CRunningScript!")
 enum OpcodeResult : char
 {
     OR_CONTINUE = 0,
-    OR_INTERRUPT = 1
+    OR_INTERRUPT = 1,
+	OR_ERROR = -1,
 };
 
 typedef OpcodeResult (CALLBACK* _pOpcodeHandler)(CRunningScript*);
@@ -261,9 +298,11 @@ float WINAPI CLEO_GetFloatOpcodeParam(CRunningScript* thread);
 void WINAPI CLEO_SetIntOpcodeParam(CRunningScript* thread, DWORD value);
 void WINAPI CLEO_SetFloatOpcodeParam(CRunningScript* thread, float value);
 
-LPSTR WINAPI CLEO_ReadStringOpcodeParam(CRunningScript* thread, LPSTR buf, int size);
-LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CRunningScript* thread, LPSTR buf, int size); // exactly same as CLEO_ReadStringOpcodeParam
-void WINAPI CLEO_WriteStringOpcodeParam(CRunningScript* thread, LPCSTR str);
+LPSTR WINAPI CLEO_ReadStringOpcodeParam(CRunningScript* thread, char* buf = nullptr, int size = 0);
+LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CRunningScript* thread, char* buf = nullptr, int size = 0); // exactly same as CLEO_ReadStringOpcodeParam
+void WINAPI CLEO_WriteStringOpcodeParam(CRunningScript* thread, const char* str);
+
+char* WINAPI CLEO_ReadParamsFormatted(CRunningScript* thread, const char* format, char* buf = nullptr, int size = 0);
 
 void WINAPI CLEO_SetThreadCondResult(CRunningScript* thread, BOOL result);
 
@@ -295,8 +334,14 @@ void WINAPI CLEO_AddScriptDeleteDelegate(FuncScriptDeleteDelegateT func);
 
 void WINAPI CLEO_RemoveScriptDeleteDelegate(FuncScriptDeleteDelegateT func);
 
-// convert to absolute file path
-void WINAPI CLEO_ResolvePath(CRunningScript* thread, char* inOutPath, DWORD pathMaxLen);
+void WINAPI CLEO_ResolvePath(CRunningScript* thread, char* inOutPath, DWORD pathMaxLen); // convert to absolute (file system) path
+
+BOOL WINAPI CLEO_GetScriptDebugMode(const CRunningScript* thread); // debug mode features enabled for this script?
+void WINAPI CLEO_SetScriptDebugMode(CRunningScript* thread, BOOL enabled);
+
+void WINAPI CLEO_Log(eLogLevel level, const char* msg); // add message to log
+
+void WINAPI CLEO_GetScriptInfoStr(CRunningScript* thread, bool currLineInfo, char* buf, DWORD bufSize); // short text for displaying in error\log messages
 
 #ifdef __cplusplus
 }

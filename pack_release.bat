@@ -16,7 +16,11 @@ if exist %outputFile% del %outputFile% /q
 
 %zip% a -tzip %outputFile% ".\.output\Release\CLEO.asi" -bb2 | findstr "+"
 
+%zip% a -tzip %outputFile% ".\source\cleo_config.ini" -bb2 | findstr "+" 
+%zip% rn %outputFile% "cleo_config.ini" "cleo\.cleo_config.ini" -bso0
+
 %zip% a -tzip %outputFile% "cleo_plugins\.output\*.cleo" -bb2 | findstr "+"
+%zip% a -tzip %outputFile% "cleo_plugins\.output\*.ini" -bb2 | findstr "+"
 %zip% rn %outputFile% "cleo_plugins\.output" "cleo\cleo_plugins" -bso0
 
 pause

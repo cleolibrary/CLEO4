@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IniFiles", "IniFiles\IniFil
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IntOperations", "IntOperations\IntOperations.vcxproj", "{68A434CF-6390-4FDF-9A15-36A8A9ECEAA9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DebugUtils", "DebugUtils\DebugUtils.vcxproj", "{481896C4-0C19-4992-9602-729537774B32}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -27,6 +29,10 @@ Global
 		{68A434CF-6390-4FDF-9A15-36A8A9ECEAA9}.Debug|x86.Build.0 = Debug|Win32
 		{68A434CF-6390-4FDF-9A15-36A8A9ECEAA9}.Release|x86.ActiveCfg = Release|Win32
 		{68A434CF-6390-4FDF-9A15-36A8A9ECEAA9}.Release|x86.Build.0 = Release|Win32
+		{481896C4-0C19-4992-9602-729537774B32}.Debug|x86.ActiveCfg = Debug|Win32
+		{481896C4-0C19-4992-9602-729537774B32}.Debug|x86.Build.0 = Debug|Win32
+		{481896C4-0C19-4992-9602-729537774B32}.Release|x86.ActiveCfg = Release|Win32
+		{481896C4-0C19-4992-9602-729537774B32}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

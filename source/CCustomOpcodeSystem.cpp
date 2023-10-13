@@ -120,32 +120,6 @@ namespace CLEO {
 
 	OpcodeResult __stdcall opcode_0DD5(CRunningScript* thread); // get_platform
 
-	CustomOpcodeHandler customOpcodeHandlers[100] =
-	{
-		opcode_0A8C, opcode_0A8D, opcode_0A8E, opcode_0A8F, opcode_0A90,
-		opcode_0A91, opcode_0A92, opcode_0A93, opcode_0A94, opcode_0A95,
-		opcode_0A96, opcode_0A97, opcode_0A98, opcode_0A99, opcode_0A9A,
-		opcode_0A9B, opcode_0A9C, opcode_0A9D, opcode_0A9E, opcode_0A9F,
-		opcode_0AA0, opcode_0AA1, opcode_0AA2, opcode_0AA3, opcode_0AA4,
-		opcode_0AA5, opcode_0AA6, opcode_0AA7, opcode_0AA8, opcode_0AA9,
-		opcode_0AAA,     nullptr, opcode_0AAC, opcode_0AAD, opcode_0AAE,
-		opcode_0AAF, opcode_0AB0, opcode_0AB1, opcode_0AB2, opcode_0AB3,
-		opcode_0AB4, opcode_0AB5, opcode_0AB6, opcode_0AB7, opcode_0AB8,
-		opcode_0AB9, opcode_0ABA, opcode_0ABB, opcode_0ABC, opcode_0ABD,
-		opcode_0ABE, opcode_0ABF, opcode_0AC0, opcode_0AC1, opcode_0AC2,
-		opcode_0AC3, opcode_0AC4, opcode_0AC5, opcode_0AC6, opcode_0AC7,
-		opcode_0AC8, opcode_0AC9, opcode_0ACA, opcode_0ACB, opcode_0ACC,
-		opcode_0ACD, opcode_0ACE, opcode_0ACF, opcode_0AD0, opcode_0AD1,
-		opcode_0AD2, opcode_0AD3, opcode_0AD4, opcode_0AD5, opcode_0AD6,
-		opcode_0AD7, opcode_0AD8, opcode_0AD9, opcode_0ADA, opcode_0ADB,
-		opcode_0ADC, opcode_0ADD, opcode_0ADE, opcode_0ADF, opcode_0AE0,
-		opcode_0AE1, opcode_0AE2, opcode_0AE3,     nullptr,     nullptr,
-		    nullptr,     nullptr,     nullptr, opcode_0AE9, opcode_0AEA,
-		opcode_0AEB, opcode_0AEC, opcode_0AED, opcode_0AEE, opcode_0AEF,
-	};
-
-	typedef OpcodeResult(__thiscall *_OpcodeHandler)(CRunningScript *thread, unsigned short opcode);
-
 	typedef void(*FuncScriptDeleteDelegateT) (CRunningScript *script);
 	struct ScriptDeleteDelegate {
 		std::vector<FuncScriptDeleteDelegateT> funcs;
@@ -155,10 +129,6 @@ namespace CLEO {
 	};
 	ScriptDeleteDelegate scriptDeleteDelegate;
 	void RunScriptDeleteDelegate(CRunningScript *script) { scriptDeleteDelegate(script); }
-
-	_OpcodeHandler *oldOpcodeHandlerTable;
-	_OpcodeHandler newOpcodeHandlerTable[329];
-	CustomOpcodeHandler extraOpcodeHandlers[100][300];
 
 	CBuildingPool		**buildingPool = nullptr;			// add for future CLEO releases
 	CVehiclePool			**vehiclePool = nullptr;
@@ -191,59 +161,52 @@ namespace CLEO {
 	CRunningScript * last_script;
 	ptrdiff_t last_off = -1;
 
-	// opcode handler for opcodes, defined by user with cleo api
-	OpcodeResult __fastcall extraOpcodeHandler(CRunningScript *thread, int dummy, unsigned short opcode)
-	{
-		last_custom_opcode = opcode;
-		last_script = thread;
-		return extraOpcodeHandlers[opcode % 100][opcode / 100 - 28](thread);
-	}
-
 	// opcode handler for custom opcodes
-	OpcodeResult __fastcall customOpcodeHandler(CRunningScript *thread, int dummy, unsigned short opcode)
+	OpcodeResult __fastcall CCustomOpcodeSystem::customOpcodeHandler(CRunningScript *thread, int dummy, WORD opcode)
 	{
-		auto handler = customOpcodeHandlers[opcode - 0x0A8C];
-		if (handler != nullptr)
+		/*std::ostringstream ss;
+		ss << thread->GetName() << " opcode " << opcodeToStr(opcode) << std::endl;
+		OutputDebugStringA(ss.str().c_str());//*/
+
+		if(opcode > LastCustomOpcode)
+		{
+			SHOW_ERROR("Opcode [%04X] out of supported range! \nCalled in script %s\nScript suspended.", opcode, ((CCustomScript*)thread)->GetInfoStr().c_str());
+			return ErrorSuspendScript(thread);
+		}
+
+		CustomOpcodeHandler handler = customOpcodeProc[opcode];
+		if(handler != nullptr)
 		{
 			last_custom_opcode = opcode;
 			last_script = thread;
 			return handler(thread);
 		}
 
-		// try with extra handlers then
-		return extraOpcodeHandler(thread, dummy, opcode);
+		// Not registered as custom opcode. Call game's original handler
+
+		if (opcode > LastOriginalOpcode)
+		{
+			SHOW_ERROR("Opcode [%04X] not registered! \nCalled in script %s\nScript suspended.", opcode, ((CCustomScript*)thread)->GetInfoStr().c_str());
+			return ErrorSuspendScript(thread);
+		}
+
+		size_t tableIdx = opcode / 100; // 100 opcodes peer handler table
+		auto result = originalOpcodeHandlers[tableIdx](thread, opcode);
+
+		if(result == OR_ERROR)
+		{
+			SHOW_ERROR("Opcode [%04X] not found! \nCalled in script %s\nScript suspended.", opcode, ((CCustomScript*)thread)->GetInfoStr().c_str());
+			return ErrorSuspendScript(thread);
+		}
+
+		return result;
 	}
 
-	char ScriptExecutionLoop()
+	OpcodeResult CCustomOpcodeSystem::ErrorSuspendScript(CRunningScript* thread)
 	{
-		CCustomScript *thread;
-		OpcodeResult res;
-
-		_asm mov thread, esi
-
-		last_script = thread;
-
-		try
-		{
-			do
-			{
-				ptrdiff_t off = thread->IsCustom() ? thread->GetBytePointer() - thread->GetBasePointer() : thread->GetBytePointer() - scmBlock;
-				WORD opcode = thread->ReadDataWord();
-				last_opcode = opcode;
-				last_off = off;
-				memcpy(last_thread, thread->GetName(), 8);
-				thread->SetNotFlag((opcode & 0x8000) != 0);
-				opcode &= 0x7FFF;
-				res = newOpcodeHandlerTable[opcode / 100](thread, opcode);
-			} while (res == OR_CONTINUE);
-		}
-		catch (const char * e)
-		{
-			char str[MAX_STR_LEN];
-			sprintf(str, "%s encountered while parsing opcode '%04X' in script '%s'", e, last_opcode, last_thread);
-			Error(str);
-		}
-		return 0;
+		//thread->SetActive(false): // will crash game if no active script left
+		((CCustomScript*)thread)->WakeTime = 0xFFFFFFFF;
+		return OpcodeResult::OR_INTERRUPT;
 	}
 
 	void CCustomOpcodeSystem::FinalizeScriptObjects()
@@ -278,28 +241,126 @@ namespace CLEO {
 		m_pAllocations.clear();
 	}
 
+	CCustomOpcodeSystem::CCustomOpcodeSystem()
+	{
+		// register CLEO opcodes
+		CLEO_RegisterOpcode(0x0A8C, opcode_0A8C);
+		CLEO_RegisterOpcode(0x0A8D, opcode_0A8D);
+		CLEO_RegisterOpcode(0x0A8E, opcode_0A8E);
+		CLEO_RegisterOpcode(0x0A8F, opcode_0A8F);
+		CLEO_RegisterOpcode(0x0A90, opcode_0A90);
+		CLEO_RegisterOpcode(0x0A91, opcode_0A91);
+		CLEO_RegisterOpcode(0x0A92, opcode_0A92);
+		CLEO_RegisterOpcode(0x0A93, opcode_0A93);
+		CLEO_RegisterOpcode(0x0A94, opcode_0A94);
+		CLEO_RegisterOpcode(0x0A95, opcode_0A95);
+		CLEO_RegisterOpcode(0x0A96, opcode_0A96);
+		CLEO_RegisterOpcode(0x0A97, opcode_0A97);
+		CLEO_RegisterOpcode(0x0A98, opcode_0A98);
+		CLEO_RegisterOpcode(0x0A99, opcode_0A99);
+		CLEO_RegisterOpcode(0x0A9A, opcode_0A9A);
+		CLEO_RegisterOpcode(0x0A9B, opcode_0A9B);
+		CLEO_RegisterOpcode(0x0A9C, opcode_0A9C);
+		CLEO_RegisterOpcode(0x0A9D, opcode_0A9D);
+		CLEO_RegisterOpcode(0x0A9E, opcode_0A9E);
+		CLEO_RegisterOpcode(0x0A9F, opcode_0A9F);
+		CLEO_RegisterOpcode(0x0AA0, opcode_0AA0);
+		CLEO_RegisterOpcode(0x0AA1, opcode_0AA1);
+		CLEO_RegisterOpcode(0x0AA2, opcode_0AA2);
+		CLEO_RegisterOpcode(0x0AA3, opcode_0AA3);
+		CLEO_RegisterOpcode(0x0AA4, opcode_0AA4);
+		CLEO_RegisterOpcode(0x0AA5, opcode_0AA5);
+		CLEO_RegisterOpcode(0x0AA6, opcode_0AA6);
+		CLEO_RegisterOpcode(0x0AA7, opcode_0AA7);
+		CLEO_RegisterOpcode(0x0AA8, opcode_0AA8);
+		CLEO_RegisterOpcode(0x0AA9, opcode_0AA9);
+		CLEO_RegisterOpcode(0x0AAA, opcode_0AAA);
+		CLEO_RegisterOpcode(0x0AAC, opcode_0AAC);
+		CLEO_RegisterOpcode(0x0AAD, opcode_0AAD);
+		CLEO_RegisterOpcode(0x0AAE, opcode_0AAE);
+		CLEO_RegisterOpcode(0x0AAF, opcode_0AAF);
+		CLEO_RegisterOpcode(0x0AB0, opcode_0AB0);
+		CLEO_RegisterOpcode(0x0AB1, opcode_0AB1);
+		CLEO_RegisterOpcode(0x0AB2, opcode_0AB2);
+		CLEO_RegisterOpcode(0x0AB3, opcode_0AB3);
+		CLEO_RegisterOpcode(0x0AB4, opcode_0AB4);
+		CLEO_RegisterOpcode(0x0AB5, opcode_0AB5);
+		CLEO_RegisterOpcode(0x0AB6, opcode_0AB6);
+		CLEO_RegisterOpcode(0x0AB7, opcode_0AB7);
+		CLEO_RegisterOpcode(0x0AB8, opcode_0AB8);
+		CLEO_RegisterOpcode(0x0AB9, opcode_0AB9);
+		CLEO_RegisterOpcode(0x0ABA, opcode_0ABA);
+		CLEO_RegisterOpcode(0x0ABB, opcode_0ABB);
+		CLEO_RegisterOpcode(0x0ABC, opcode_0ABC);
+		CLEO_RegisterOpcode(0x0ABD, opcode_0ABD);
+		CLEO_RegisterOpcode(0x0ABE, opcode_0ABE);
+		CLEO_RegisterOpcode(0x0ABF, opcode_0ABF);
+		CLEO_RegisterOpcode(0x0AC0, opcode_0AC0);
+		CLEO_RegisterOpcode(0x0AC1, opcode_0AC1);
+		CLEO_RegisterOpcode(0x0AC2, opcode_0AC2);
+		CLEO_RegisterOpcode(0x0AC3, opcode_0AC3);
+		CLEO_RegisterOpcode(0x0AC4, opcode_0AC4);
+		CLEO_RegisterOpcode(0x0AC5, opcode_0AC5);
+		CLEO_RegisterOpcode(0x0AC6, opcode_0AC6);
+		CLEO_RegisterOpcode(0x0AC7, opcode_0AC7);
+		CLEO_RegisterOpcode(0x0AC8, opcode_0AC8);
+		CLEO_RegisterOpcode(0x0AC9, opcode_0AC9);
+		CLEO_RegisterOpcode(0x0ACA, opcode_0ACA);
+		CLEO_RegisterOpcode(0x0ACB, opcode_0ACB);
+		CLEO_RegisterOpcode(0x0ACC, opcode_0ACC);
+		CLEO_RegisterOpcode(0x0ACD, opcode_0ACD);
+		CLEO_RegisterOpcode(0x0ACE, opcode_0ACE);
+		CLEO_RegisterOpcode(0x0ACF, opcode_0ACF);
+		CLEO_RegisterOpcode(0x0AD0, opcode_0AD0);
+		CLEO_RegisterOpcode(0x0AD1, opcode_0AD1);
+		CLEO_RegisterOpcode(0x0AD2, opcode_0AD2);
+		CLEO_RegisterOpcode(0x0AD3, opcode_0AD3);
+		CLEO_RegisterOpcode(0x0AD4, opcode_0AD4);
+		CLEO_RegisterOpcode(0x0AD5, opcode_0AD5);
+		CLEO_RegisterOpcode(0x0AD6, opcode_0AD6);
+		CLEO_RegisterOpcode(0x0AD7, opcode_0AD7);
+		CLEO_RegisterOpcode(0x0AD8, opcode_0AD8);
+		CLEO_RegisterOpcode(0x0AD9, opcode_0AD9);
+		CLEO_RegisterOpcode(0x0ADA, opcode_0ADA);
+		CLEO_RegisterOpcode(0x0ADB, opcode_0ADB);
+		CLEO_RegisterOpcode(0x0ADC, opcode_0ADC);
+		CLEO_RegisterOpcode(0x0ADD, opcode_0ADD);
+		CLEO_RegisterOpcode(0x0ADE, opcode_0ADE);
+		CLEO_RegisterOpcode(0x0ADF, opcode_0ADF);
+		CLEO_RegisterOpcode(0x0AE0, opcode_0AE0);
+		CLEO_RegisterOpcode(0x0AE1, opcode_0AE1);
+		CLEO_RegisterOpcode(0x0AE2, opcode_0AE2);
+		CLEO_RegisterOpcode(0x0AE3, opcode_0AE3);
+		CLEO_RegisterOpcode(0x0AE9, opcode_0AE9);
+		CLEO_RegisterOpcode(0x0AEA, opcode_0AEA);
+		CLEO_RegisterOpcode(0x0AEB, opcode_0AEB);
+		CLEO_RegisterOpcode(0x0AEC, opcode_0AEC);
+		CLEO_RegisterOpcode(0x0AED, opcode_0AED);
+		CLEO_RegisterOpcode(0x0AEE, opcode_0AEE);
+		CLEO_RegisterOpcode(0x0AEF, opcode_0AEF);
+		CLEO_RegisterOpcode(0x0DD5, opcode_0DD5); // get_platform
+	}
+
 	void CCustomOpcodeSystem::Inject(CCodeInjector& inj)
 	{
 		TRACE("Injecting CustomOpcodeSystem...");
 		CGameVersionManager& gvm = GetInstance().VersionManager;
-		oldOpcodeHandlerTable = gvm.TranslateMemoryAddress(MA_OPCODE_HANDLER);
 
-		// add handler for custom opcodes
-		oldOpcodeHandlerTable[27] = reinterpret_cast<_OpcodeHandler>(customOpcodeHandler);
+		// replace all handlers in original table
+		// store original opcode handlers for later use
+		_OpcodeHandler* handlersTable = gvm.TranslateMemoryAddress(MA_OPCODE_HANDLER);
+		for(size_t i = 0; i < OriginalOpcodeHandlersCount; i++)
+		{
+			originalOpcodeHandlers[i] = handlersTable[i];
+			handlersTable[i] = (_OpcodeHandler)customOpcodeHandler;
+		}
 
-		// replace old OpcodeHandlerTable with the new one
-		//inj.MemoryWrite(gvm.TranslateMemoryAddress(MA_OPCODE_HANDLER_REF), reinterpret_cast<_OpcodeHandler>(&newOpcodeHandlerTable[0]));
-		MemWrite(gvm.TranslateMemoryAddress(MA_OPCODE_HANDLER_REF), reinterpret_cast<_OpcodeHandler>(&newOpcodeHandlerTable[0]));
-
-		// copy old table to the new                                                             
-		//std::copy(oldOpcodeHandlerTable, oldOpcodeHandlerTable + 28, newOpcodeHandlerTable);
-		MemCopy<_OpcodeHandler>(newOpcodeHandlerTable, oldOpcodeHandlerTable, (&oldOpcodeHandlerTable[28] - oldOpcodeHandlerTable) * 4);
-		//MemCopy(newOpcodeHandlerTable, oldOpcodeHandlerTable, oldOpcodeHandlerTable - (oldOpcodeHandlerTable + 28));
-
-		// fill the rest with default handler
-		std::fill(newOpcodeHandlerTable + 28, newOpcodeHandlerTable + 329, reinterpret_cast<_OpcodeHandler>(extraOpcodeHandler));
-
-		CLEO_RegisterOpcode(0x0DD5, opcode_0DD5); // get_platform
+		// initialize and apply new handlers table
+		for (size_t i = 0; i < CustomOpcodeHandlersCount; i++)
+		{
+			customOpcodeHandlers[i] = (_OpcodeHandler)customOpcodeHandler;
+		}
+		MemWrite(gvm.TranslateMemoryAddress(MA_OPCODE_HANDLER_REF), &customOpcodeHandlers);
 
 		FUNC_fopen = gvm.TranslateMemoryAddress(MA_FOPEN_FUNCTION);
 		FUNC_fclose = gvm.TranslateMemoryAddress(MA_FCLOSE_FUNCTION);
@@ -328,21 +389,39 @@ namespace CLEO {
 		SpawnCar = gvm.TranslateMemoryAddress(MA_SPAWN_CAR_FUNCTION);
 
 		// TODO: consider version-agnostic code
-		if (gvm.GetGameVersion() == GV_US10) {
+		if (gvm.GetGameVersion() == GV_US10)
+		{
 			// make it compatible with fastman92's limit adjuster (only required for 1.0 US)
 			RadarBlips = injector::ReadMemory<CMarker*>(0x583A05 + 2, true);
 		}
-		else {
+		else
+		{
 			RadarBlips = gvm.TranslateMemoryAddress(MA_RADAR_BLIPS);
 		}
+	}
 
-		/*if(gvm.GetGameVersion() == GV_US10)
+	CCustomOpcodeSystem::_OpcodeHandler CCustomOpcodeSystem::originalOpcodeHandlers[OriginalOpcodeHandlersCount];
+	CCustomOpcodeSystem::_OpcodeHandler CCustomOpcodeSystem::customOpcodeHandlers[CustomOpcodeHandlersCount];
+	CustomOpcodeHandler CCustomOpcodeSystem::customOpcodeProc[LastCustomOpcode + 1];
+
+	bool CCustomOpcodeSystem::RegisterOpcode(WORD opcode, CustomOpcodeHandler callback)
+	{
+		if (opcode > LastCustomOpcode)
 		{
-		inj.Nop(0x469FB0, 0x469FFB - 0x469FB0);
-		inj.ReplaceFunction(ScriptExecutionLoop, 0x469FF6);
-		inj.Nop(0x469FF2, 0x469FFB - 0x469FF2);
-		inj.ReplaceFunction(ScriptExecutionLoop, 0x469FF6);
-		}*/
+			SHOW_ERROR("Can not register [%04X] opcode! Out of supported range.", opcode);
+			return false;
+		}
+
+		CustomOpcodeHandler& dst = customOpcodeProc[opcode];
+		if (*dst != nullptr)
+		{
+			LOG_WARNING("Opcode [%04X] already registered! Skipping.", opcode);
+			return false;
+		}
+
+		dst = callback;
+		TRACE("Opcode [%04X] registered", opcode);
+		return true;
 	}
 
 	inline CRunningScript& operator>>(CRunningScript& thread, DWORD& uval)
@@ -512,9 +591,7 @@ namespace CLEO {
 
 		// unsupported param type
 		GetScriptParams(thread, 1); // skip unhandled param
-		std::string err(MAX_STR_LEN, '\0');
-		sprintf(err.data(), "Reading string from invalid argument type (%02X) in script '%s'", paramType, reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-		Error(err.data());
+		SHOW_ERROR("Reading string from invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)thread)->GetInfoStr().c_str());
 		return nullptr;
 	}
 
@@ -561,9 +638,7 @@ namespace CLEO {
 			default:
 			{
 				GetScriptParams(thread, 1); // skip unhandled param
-				std::string err(MAX_STR_LEN, '\0');
-				sprintf(err.data(), "Outputing string into invalid argument type (%02X) in script '%s'", paramType, reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-				Error(err.data());
+				SHOW_ERROR("Outputing string into invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)thread)->GetInfoStr().c_str());
 				return false;
 			}
 		}
@@ -576,6 +651,8 @@ namespace CLEO {
 	// perform 'sprintf'-operation for parameters, passed through SCM
 	int ReadFormattedString(CRunningScript *thread, char *outputStr, size_t len, const char *format)
 	{
+		memset(outputStr, 0, len);
+
 		unsigned int written = 0;
 		const char *iter = format;
 		char bufa[256], fmtbufa[64], *fmta;
@@ -724,18 +801,14 @@ namespace CLEO {
 
 		if (written >= len)
 		{
-			std::string err(MAX_STR_LEN, '\0');
-			sprintf(err.data(), "Error while formatting string in script '%s'. Output buffer is too short!", reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-			Error(err.data());
+			LOG_WARNING("Read formatted string error: Insufficient output buffer size in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
 			return -1;
 		}
 
 		// still more var-args available
 		if (CLEO_GetOperandType(thread) != DT_END)
 		{
-			std::string err(MAX_STR_LEN, '\0');
-			sprintf(err.data(), "Error while formatting string in script '%s'. More arguments than slots in specified format!", reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-			Error(err.data());
+			LOG_WARNING("Read formatted string: Found more params than format slots in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
 		}
 		SkipUnusedParameters(thread); // skip terminator too
 
@@ -743,9 +816,9 @@ namespace CLEO {
 		return (int)written;
 
 		ReadFormattedString_ArgMissing:
-		std::string err(MAX_STR_LEN, '\0');
-		sprintf(err.data(), "Error while formatting string in script '%s'. Not enough arguments to match specified format!", reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-		Error(err.data());
+		thread->IncPtr(); // skip vararg terminator
+		LOG_WARNING("Read formatted string: Not enough arguments to fulfill specified format in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
+		CCustomOpcodeSystem::ErrorSuspendScript(thread);
 		return (int)written;
 	}
 
@@ -919,48 +992,6 @@ namespace CLEO {
 		else fflush(convert_handle_to_file(dwHandle));
 	}
 
-	/*inline void __impl_RetrieveScriptParam(SCRIPT_VAR*) { }
-	template<typename ..Params> inline void __impl_RetrieveScriptParam(SCRIPT_VAR *, unsigned&, Params&...);
-	template<typename Params> inline void __impl_RetrieveScriptParam(SCRIPT_VAR *, int&, Params&...);
-	template<typename Params> inline void __impl_RetrieveScriptParam(SCRIPT_VAR *, float&, Params&...);
-	template<typename ThisParam, typename Params> inline void __impl_RetrieveScriptParam(SCRIPT_VAR *, ThisParam *&, Params&...);
-
-	template<typename Params>
-	inline void __impl_RetrieveScriptParam(SCRIPT_VAR *var, unsigned& thisParam, Params&... restParams)
-	{
-	thisParam = var->dwParam;
-	__impl_RetrieveScriptParam(var + 1, restParams...);
-	}
-
-	template<typename... Params>
-	inline void __impl_RetrieveScriptParam(SCRIPT_VAR *var, int& thisParam, Params&... restParams)
-	{
-	thisParam = var->nParam;
-	__impl_RetrieveScriptParam(var + 1, restParams...);
-	}
-
-	template<typename... Params>
-	inline void __impl_RetrieveScriptParam(SCRIPT_VAR *var, float& thisParam, Params&... restParams)
-	{
-	thisParam = var->fParam;
-	__impl_RetrieveScriptParam(var + 1, restParams...);
-	}
-
-	template<typename ThisParam, typename... Params>
-	inline void __impl_RetrieveScriptParam(SCRIPT_VAR *var, ThisParam *& thisParam, Params&... restParams)
-	{
-	thisParam = reinterpret_cast<ThisParam *>(var->pParam);
-	__impl_RetrieveScriptParam(var + 1, restParams...);
-	}
-
-
-	template<typename... Params>
-	inline void RetrieveScriptParams(CCustomScript *thread, Params&... params)
-	{
-	GetScriptParams(thread, sizeof...(params));
-	__impl_RetrieveScriptParam(opcodeParams, params...);
-	}*/
-
 	inline void ThreadJump(CRunningScript *thread, int off)
 	{
 		thread->SetIp(off < 0 ? thread->GetBasePointer() - off : scmBlock + off);
@@ -999,7 +1030,11 @@ namespace CLEO {
 			while (Store[allocationPlace])	// find first unused position in store
 			{
 				if (++allocationPlace >= store_size) allocationPlace = 0;		// end of store reached
-				if (allocationPlace == start_search) throw std::bad_alloc();	// the store is filled up
+				if (allocationPlace == start_search) 
+				{
+					SHOW_ERROR("CLEO function storage stack overfllow!");
+					throw std::bad_alloc();	// the store is filled up
+				}
 			}
 			ScmFunction *obj = reinterpret_cast<ScmFunction *>(::operator new(size));
 			Store[allocationPlace] = obj;
@@ -1144,7 +1179,7 @@ namespace CLEO {
 			GetInstance().CodeInjector.MemoryRead(Address, (DWORD)opcodeParams[0].dwParam, vp);
 			break;
 		default:
-			TRACE("[0A8D] Unallowed size %u", size);
+			SHOW_ERROR("Invalid size param (%d) of opcode [0A8D])", size);
 		}
 
 		SetScriptParams(thread, 1);
@@ -1199,12 +1234,13 @@ namespace CLEO {
 		{
 			GetInstance().ScriptEngine.AddCustomScript(cs);
 			TransmitScriptParams(thread, cs);
+			cs->SetDebugMode(reinterpret_cast<CCustomScript*>(thread)->GetDebugMode());
 		}
 		else
 		{
 			if (cs) delete cs;
 			SkipUnusedParameters(thread);
-			TRACE("[0A92] Failed to load script '%s' from script '%s'.", filename.c_str(), thread->GetName());
+			LOG_WARNING("Failed to load script '%s' in script ", filename.c_str(), ((CCustomScript*)thread)->GetInfoStr().c_str());
 		}
 
 		return OR_CONTINUE;
@@ -1216,7 +1252,7 @@ namespace CLEO {
 		CCustomScript *cs = reinterpret_cast<CCustomScript *>(thread);
 		if (thread->IsMission() || !cs->IsCustom())
 		{
-			TRACE("[0A93] Incorrect usage of opcode in script '%s'", thread->GetName());
+			LOG_WARNING("[0A93] Incorrect usage of opcode in script '%s'", ((CCustomScript*)thread)->GetInfoStr().c_str());
 			return OR_CONTINUE;
 		}
 		GetInstance().ScriptEngine.RemoveCustomScript(cs);
@@ -1239,12 +1275,13 @@ namespace CLEO {
 				cs->SetCompatibility(csscript->GetCompatibility());
 			GetInstance().ScriptEngine.AddCustomScript(cs);
 			TransmitScriptParams(thread, (CRunningScript*)((BYTE*)missionLocals - 0x3C));
+			cs->SetDebugMode(reinterpret_cast<CCustomScript*>(thread)->GetDebugMode());
 		}
 		else
 		{
 			if (cs) delete cs;
 			SkipUnusedParameters(thread);
-			TRACE("[0A94] Failed to load mission '%s' from script '%s'.", filename.c_str(), thread->GetName());
+			LOG_WARNING("[0A94] Failed to load mission '%s' from script '%s'.", filename.c_str(), thread->GetName());
 		}
 
 		return OR_CONTINUE;
@@ -1757,7 +1794,7 @@ namespace CLEO {
 			case 2: stream->Pause();  break;
 			case 3: stream->Resume(); break;
 			default:
-				TRACE("[0AAD] Unknown audiostream's action: %d", action);
+				LOG_WARNING("[0AAD] Unknown audiostream's action (%d) in script %s", action, ((CCustomScript*)thread)->GetInfoStr().c_str());
 			}
 		}
 		return OR_CONTINUE;
@@ -1826,10 +1863,8 @@ namespace CLEO {
 
 			default:
 			{
-				std::string err(128, '\0');
-				sprintf(err.data(), "Invalid first argument type (%02X) of 0AB1 opcode in script '%s'", *thread->GetBytePointer(), reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-				Error(err.data());
-				return OR_INTERRUPT;
+				SHOW_ERROR("Invalid first argument type (%02X) of [0AB1] opcode in script '%s' \nScript suspended.", *thread->GetBytePointer(), ((CCustomScript*)thread)->GetInfoStr().c_str());
+				return CCustomOpcodeSystem::ErrorSuspendScript(thread);
 			}
 		}
 
@@ -1842,10 +1877,8 @@ namespace CLEO {
 			auto pos = str.find('@');
 			if (pos == str.npos)
 			{
-				std::string err(128, '\0');
-				sprintf(err.data(), "Invalid module reference '%s' in 0AB1 opcode in script '%s'", moduleTxt, reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-				Error(err.data());
-				return OR_INTERRUPT;
+				SHOW_ERROR("Invalid module reference '%s' in 0AB1 opcode in script '%s' \nScript suspended.", moduleTxt, ((CCustomScript*)thread)->GetInfoStr().c_str());
+				return CCustomOpcodeSystem::ErrorSuspendScript(thread);
 			}
 			std::string_view strExport = str.substr(0, pos);
 			std::string_view strModule = str.substr(pos + 1);
@@ -1858,10 +1891,8 @@ namespace CLEO {
 			auto scriptRef = GetInstance().ModuleSystem.GetExport(modulePath, strExport);
 			if (!scriptRef.Valid())
 			{
-				std::string err(128, '\0');
-				sprintf(err.data(), "Not found module '%s' export '%s', requested by 0AB1 opcode in script '%s'", modulePath.c_str(), &str[0], reinterpret_cast<CCustomScript*>(thread)->GetScriptFileName());
-				Error(err.data());
-				return OR_INTERRUPT;
+				SHOW_ERROR("Not found module '%s' export '%s', requested by 0AB1 opcode in script '%s'", modulePath.c_str(), &str[0], ((CCustomScript*)thread)->GetInfoStr().c_str());
+				return CCustomOpcodeSystem::ErrorSuspendScript(thread);
 			}
 			scmFunc->moduleExportRef = scriptRef.base; // to be released on return
 
@@ -2772,18 +2803,7 @@ extern "C"
 
 	BOOL WINAPI CLEO_RegisterOpcode(WORD opcode, CustomOpcodeHandler callback)
 	{
-		if ((opcode > 0x7FFF) || (opcode < 0x0AAB))
-			return FALSE;
-
-		CustomOpcodeHandler& dst = extraOpcodeHandlers[opcode % 100][opcode / 100 - 28];
-
-		if (*dst)
-		{
-			Error("Warning! CLEO couldn't register opcode handler.");
-			return FALSE;
-		}
-		dst = callback;
-		return TRUE;
+		return CCustomOpcodeSystem::RegisterOpcode(opcode, callback);
 	}
 
 #ifdef _MSC_VER
@@ -2828,9 +2848,24 @@ extern "C"
 		return ReadStringParam(thread, buf, size);
 	}
 
-	void WINAPI CLEO_WriteStringOpcodeParam(CLEO::CRunningScript* thread, LPCSTR str)
+	void WINAPI CLEO_WriteStringOpcodeParam(CLEO::CRunningScript* thread, const char* str)
 	{
 		WriteStringParam(thread, str);
+	}
+
+	char* WINAPI CLEO_ReadParamsFormatted(CLEO::CRunningScript* thread, const char* format, char* buf, int size)
+	{
+		static char internal_buf[MAX_STR_LEN * 4];
+		if (!buf) { buf = internal_buf; size = sizeof(internal_buf); }
+		if (!size) size = MAX_STR_LEN;
+		std::fill(buf, buf + size, '\0');
+
+		if(format != nullptr && strlen(format) > 0)
+			ReadFormattedString(thread, buf, size, format);
+		else
+			SkipUnusedParameters(thread);
+
+		return buf;
 	}
 
 	void WINAPI CLEO_SetThreadCondResult(CLEO::CRunningScript* thread, BOOL result)
@@ -2940,12 +2975,16 @@ extern "C"
 		{
 			GetInstance().ScriptEngine.AddCustomScript(cs);
 			if (fromThread) TransmitScriptParams(fromThread, cs);
+
+			cs->SetDebugMode(fromThread ? 
+				reinterpret_cast<CCustomScript*>(fromThread)->GetDebugMode() : // from parent
+				GetInstance().ScriptEngine.NativeScriptsDebugMode); // global
 		}
 		else
 		{
 			if (cs) delete cs;
 			if (fromThread) SkipUnusedParameters(fromThread);
-			TRACE("Failed to load script '%s'.", script_name);
+			LOG_WARNING("Failed to load script '%s'.", script_name);
 			return nullptr;
 		}
 
@@ -2969,7 +3008,7 @@ extern "C"
 
 	void WINAPI CLEO_ResolvePath(CLEO::CRunningScript* thread, char* inOutPath, DWORD pathMaxLen)
 	{
-		if (thread == nullptr || inOutPath == nullptr || pathMaxLen < 1)
+		if (thread == nullptr || inOutPath == nullptr || pathMaxLen < 2)
 		{
 			return; // invalid param
 		}
@@ -2980,5 +3019,30 @@ extern "C"
 			resolved.resize(pathMaxLen - 1); // and terminator character
 
 		std::memcpy(inOutPath, resolved.c_str(), resolved.length() + 1); // with terminator
+	}
+
+	BOOL WINAPI CLEO_GetScriptDebugMode(const CLEO::CRunningScript* thread)
+	{
+		return reinterpret_cast<const CCustomScript*>(thread)->GetDebugMode();
+	}
+
+	void WINAPI CLEO_SetScriptDebugMode(CLEO::CRunningScript* thread, BOOL enabled)
+	{
+		reinterpret_cast<CCustomScript*>(thread)->SetDebugMode(enabled);
+	}
+
+	void WINAPI CLEO_GetScriptInfoStr(CLEO::CRunningScript* thread, bool currLineInfo, char* buf, DWORD bufSize)
+	{
+		if (thread == nullptr || buf == nullptr || bufSize < 2)
+		{
+			return; // invalid param
+		}
+
+		auto text = reinterpret_cast<CCustomScript*>(thread)->GetInfoStr(currLineInfo);
+
+		if (text.length() >= bufSize)
+			text.resize(bufSize - 1); // and terminator character
+
+		std::memcpy(buf, text.c_str(), text.length() + 1); // with terminator
 	}
 }
