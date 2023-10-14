@@ -8,6 +8,8 @@
 - new opcode 00CD (trace)
 - new opcode 00CE (log_to_file)
 - new opcode 0DD5 (get_game_platform)
+- new opcode 2000 (resolve_filepath)
+- new opcode 2001 (get_script_name)
 - implemented support of opcodes 0662, 0663 and 0664 (original Rockstar's script debugging opcodes. See DebugUtils.ini)
 - opcodes 0AAB, 0AE4, 0AE5, 0AE1, 0AE2 and 0AE3 moved from CLEO to File plugin. Adding "{$USE FILE}" might be required to compile some scripts
 - introduced 'virtual absolute paths'. Use prefix in file path strings to access predefined locations: "0:\" game root, "1:\" game save files directory, "2:\" this script file directory, "3:\" cleo folder, "4:\" cleo\cleo_modules
