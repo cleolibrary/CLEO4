@@ -621,7 +621,6 @@ namespace CLEO {
 			case DT_LVAR_TEXTLABEL_ARRAY:
 				targetBuff = (char*)GetScriptParamPointer(thread);
 				len = min(len, 7); // 8 with terminator
-				GetScriptParams(thread, 1); // param processed
 				break;
 
 			// long string variable
@@ -631,12 +630,11 @@ namespace CLEO {
 			case DT_LVAR_STRING_ARRAY:
 				targetBuff = (char*)GetScriptParamPointer(thread);
 				len = min(len, 15); // 16 with terminator
-				GetScriptParams(thread, 1); // param processed
 				break;
 
 			default:
 			{
-				GetScriptParams(thread, 1); // skip unhandled param
+				CLEO_SkipOpcodeParams(thread, 1); // skip unhandled param
 				SHOW_ERROR("Outputing string into invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)thread)->GetInfoStr().c_str());
 				return false;
 			}
