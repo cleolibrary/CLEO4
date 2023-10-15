@@ -8,6 +8,15 @@ echo Detected version: %fileVersion%
 SET outputFile=".\CLEO.SA_v%fileVersion%.zip"
 if exist %outputFile% del %outputFile% /q
 
+mkdir pack_tmp
+mkdir pack_tmp\cleo
+mkdir pack_tmp\cleo\cleo_modules
+mkdir pack_tmp\cleo\cleo_plugins
+mkdir pack_tmp\cleo\cleo_saves
+mkdir pack_tmp\cleo\cleo_text
+%zip% a -tzip %outputFile% ".\pack_tmp\*" -r -bso0
+rmdir /s /q pack_tmp
+
 %zip% a -tzip %outputFile% ".\Changelog.md" -bb2 | findstr "+" 
 %zip% rn %outputFile% "Changelog.md" "cleo_readme\Changelog.txt" -bso0
 
