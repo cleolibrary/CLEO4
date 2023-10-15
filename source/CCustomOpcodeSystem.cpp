@@ -7,6 +7,7 @@
 #include "CModelInfo.h"
 
 #include <filesystem>
+#include <sstream>
 
 namespace CLEO {
 	DWORD FUNC_fopen;
@@ -2794,11 +2795,12 @@ namespace CLEO {
 		return OR_CONTINUE;
 	}
 
-	//2001=2,%2s% = get_script_filename %1d% // IF and SET
+	//2001=3,%3s% = get_script_filename %1d% full_path %2d% // IF and SET
 	OpcodeResult __stdcall opcode_2001(CRunningScript* thread)
 	{
 		CCustomScript* script;
-		*thread >> script;
+		DWORD fullPath;
+		*thread >> script >> fullPath;
 
 		if((int)script == -1) 
 		{
@@ -2813,8 +2815,16 @@ namespace CLEO {
 				return OR_CONTINUE;
 			}
 		}
-		
-		CLEO_WriteStringOpcodeParam(thread, script->GetScriptFileName());
+
+		if(fullPath != 0)
+		{
+			std::ostringstream ss;
+			ss << script->GetScriptFileDir() << "\\" << script->GetScriptFileName();
+			CLEO_WriteStringOpcodeParam(thread, ss.str().c_str());
+		}
+		else
+			CLEO_WriteStringOpcodeParam(thread, script->GetScriptFileName());
+
 		SetScriptCondResult(thread, true);
 		return OR_CONTINUE;
 	}
