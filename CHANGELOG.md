@@ -20,6 +20,7 @@
 - 'argument count' parameter of 0AB2 (cleo_return) is now optional. 'cleo_return 0' can be written as 'cleo_return'
 - fixed handling of strings longer than 128 characters causing errors in some cases
 - fixed error in handling of first string argument in 0AF5 (write_string to_ini_file)
+- fixed resolution dependent aspect ratio of CLEO text in main menu
 #### SDK AND PLUGINS
 - now all opcodes in range 0-7FFF can be registered by plugins
 - plugins moved to cleo\cleo_plugins directory
