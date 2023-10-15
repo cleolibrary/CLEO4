@@ -1,5 +1,6 @@
 ## 4.5.0
 
+- introduced CLEO modules feature
 - introduced DebugUtils plugin
 - new opcode 00C3 (debug_on)
 - new opcode 00C4 (debug_off)
@@ -7,23 +8,33 @@
 - new opcode 00CD (trace)
 - new opcode 00CE (log_to_file)
 - new opcode 0DD5 (get_game_platform)
-- implemented support of opcodes 0662, 0663 and 0664 (original R* script debugging opcodes. See DebugUtils.ini)
-- updated project settings
-- plugins moved to cleo\cleo_plugins directory
-- opcodes 0AAB, 0AE4, 0AE5, 0AE1, 0AE2 and 0AE3 moved from CLEO to File plugin. Adding "{$USE FILE}" might be required to compile some scripts.
-- rewritten Current Working Directory (editable with 0A99) handling. CWD changes no longer affects internal game's processes and are not globally shared among all scripts.
-- added more detailed error messages in some cases
-- on some errors instead of crashing game the invalid script is paused
-- updated general methods for getting and setting string parameters
+- implemented support of opcodes 0662, 0663 and 0664 (original Rockstar's script debugging opcodes. See DebugUtils.ini)
+- opcodes 0AAB, 0AE4, 0AE5, 0AE1, 0AE2 and 0AE3 moved from CLEO to File plugin. Adding "{$USE FILE}" might be required to compile some scripts
 - introduced 'virtual absolute paths'. Use prefix in file path strings to access predefined locations: "0:\" game root, "1:\" game save files directory, "2:\" this script file directory, "3:\" cleo folder, "4:\" cleo\cleo_modules
-- updated opcodes handling. Now all opcodes in range 0-7FFF can be registered by CLEO plugins
-- new CLEO SDK export: CLEO_ResolvePath
-- new CLEO SDK export: CLEO_RegisterCallback
-- new CLEO SDK export: CLEO_GetScriptVersion
-- new CLEO SDK export: CLEO_GetScriptDebugMode
-- new CLEO SDK export: CLEO_SetScriptDebugMode
-- new CLEO SDK export: CLEO_Log
-- new CLEO SDK export: CLEO_ReadParamsFormatted
+- added more detailed error messages in some scenarios
+- on some errors instead of crashing the game just invalid script is paused
+- 0AB1 (cleo_call) and 0AB2 (cleo_return) scope now saves and restores GOSUB's call stack
+- when reading less than 4 bytes with 0A9D (readfile) now remaining bytes of the target variable are set to zero
+- fixed error in 004E (terminate_this_script) allowing to run multiple missions
+- 'argument count' parameter of 0AB1 (cleo_call) is now optional. 'cleo_call @LABEL args 0' can be written as 'cleo_call @LABEL'
+- 'argument count' parameter of 0AB2 (cleo_return) is now optional. 'cleo_return 0' can be written as 'cleo_return'
+- fixed handling of strings longer than 128 characters causing errors in some cases
+- fixed error in handling of first string argument in 0AF5 (write_string to_ini_file)
+### SDK AND PLUGINS
+- now all opcodes in range 0-7FFF can be registered by plugins
+- plugins moved to cleo\cleo_plugins directory
+- new SDK method: CLEO_ResolvePath
+- new SDK method: CLEO_RegisterCallback
+- new SDK method: CLEO_GetScriptVersion
+- new SDK method: CLEO_GetScriptDebugMode
+- new SDK method: CLEO_SetScriptDebugMode
+- new SDK method: CLEO_Log
+- new SDK method: CLEO_ReadParamsFormatted	
+### CLEO internal
+- updated project settings
+- updated general methods for getting and setting string parameters
+- rewritten Current Working Directory (editable with 0A99) handling. CWD changes no longer affects internal game's processes and are not globally shared among all scripts
+- updated opcodes handling
 
 ## 4.4.4
 
