@@ -20,7 +20,7 @@
 - 'argument count' parameter of 0AB2 (cleo_return) is now optional. 'cleo_return 0' can be written as 'cleo_return'
 - fixed handling of strings longer than 128 characters causing errors in some cases
 - fixed error in handling of first string argument in 0AF5 (write_string to_ini_file)
-### SDK AND PLUGINS
+#### SDK AND PLUGINS
 - now all opcodes in range 0-7FFF can be registered by plugins
 - plugins moved to cleo\cleo_plugins directory
 - new SDK method: CLEO_ResolvePath
@@ -30,7 +30,7 @@
 - new SDK method: CLEO_SetScriptDebugMode
 - new SDK method: CLEO_Log
 - new SDK method: CLEO_ReadParamsFormatted	
-### CLEO internal
+#### CLEO internal
 - updated project settings
 - updated general methods for getting and setting string parameters
 - rewritten Current Working Directory (editable with 0A99) handling. CWD changes no longer affects internal game's processes and are not globally shared among all scripts
