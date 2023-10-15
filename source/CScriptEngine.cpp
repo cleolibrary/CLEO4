@@ -1120,6 +1120,23 @@ namespace CLEO
         return nullptr;
     }
 
+    bool CScriptEngine::IsValidScriptPtr(const CRunningScript* ptr) const
+    {
+        for (auto script = *activeThreadQueue; script != nullptr; script = script->GetNext())
+        {
+            if (script == ptr)
+                return true;
+        }
+
+        for (const auto script : CustomScripts)
+        {
+            if (script == ptr)
+                return true;
+        }
+
+        return false;
+    }
+
     void CScriptEngine::AddCustomScript(CCustomScript *cs)
     {
         if (cs->IsMission())

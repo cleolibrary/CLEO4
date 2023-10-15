@@ -2794,13 +2794,28 @@ namespace CLEO {
 		return OR_CONTINUE;
 	}
 
-	//2001=2,%2s% = get_script_filename %1d%
+	//2001=2,%2s% = get_script_filename %1d% // IF and SET
 	OpcodeResult __stdcall opcode_2001(CRunningScript* thread)
 	{
 		CCustomScript* script;
 		*thread >> script;
-		if((int)script == -1) script = (CCustomScript*)thread; // current script
-		CLEO_WriteStringOpcodeParam(thread, script ? script->GetScriptFileName() : "(null)" );
+
+		if((int)script == -1) 
+		{
+			script = (CCustomScript*)thread; // current script
+		}
+		else
+		{
+			if(!GetInstance().ScriptEngine.IsValidScriptPtr(script))
+			{
+				CLEO_SkipOpcodeParams(thread, 1); // no result text
+				SetScriptCondResult(thread, false); // invalid input param
+				return OR_CONTINUE;
+			}
+		}
+		
+		CLEO_WriteStringOpcodeParam(thread, script->GetScriptFileName());
+		SetScriptCondResult(thread, true);
 		return OR_CONTINUE;
 	}
 }

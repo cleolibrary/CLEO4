@@ -122,6 +122,7 @@ namespace CLEO
 
         CRunningScript*	FindScriptNamed(const char *);
         CCustomScript*	FindCustomScriptNamed(const char*);
+        bool IsValidScriptPtr(const CRunningScript*) const; // leads to active script? (regular or custom)
         void AddCustomScript(CCustomScript*);
         void RemoveCustomScript(CCustomScript*);
         void RemoveAllCustomScripts();
