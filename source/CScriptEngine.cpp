@@ -440,14 +440,17 @@ namespace CLEO
     {
         GetInstance().ScriptEngine.DrawScriptStuff(bBeforeFade);
 
+        if(bBeforeFade)
+            DrawScriptStuff_H(bBeforeFade);
+        else
+            DrawScriptStuff(bBeforeFade);
+
+        // run registered callbacks
         for (void* func : GetInstance().GetCallbacks(eCallbackId::ScriptDraw))
         {
             typedef void WINAPI callback(bool);
             ((callback*)func)(bBeforeFade != 0);
         }
-
-        // restore SCM textures and return to the overwritten func (which may != DrawScriptSprites)
-        return bBeforeFade ? DrawScriptStuff_H(bBeforeFade) : DrawScriptStuff(bBeforeFade);
     }
 
 #define NUM_STORED_SPRITES 128

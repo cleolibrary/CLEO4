@@ -3,6 +3,7 @@
 #include "CleoBase.h"
 #include "CDebug.h"
 #include "CFont.h"
+#include "plugin.h"
 #include <sstream>
 
 namespace CLEO
@@ -73,17 +74,6 @@ namespace CLEO
             sizeY *= subtextHeight;
             CFont::SetScale(sizeX, sizeY);
             CFont::PrintString(posX, posY - 15.0f * sizeY, text.str().c_str());
-        }
-
-        // execute callbacks
-        auto& cleo = GetInstance();
-        if (cleo.IsStarted())
-        {
-            for (void* func : cleo.GetCallbacks(eCallbackId::MenuDraw))
-            {
-                typedef void WINAPI callback(void);
-                ((callback*)func)();
-            }
         }
     }
 

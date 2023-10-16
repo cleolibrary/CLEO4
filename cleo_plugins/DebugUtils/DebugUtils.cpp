@@ -53,11 +53,10 @@ public:
             }
 
             // register event callbacks
-            CLEO_RegisterCallback(eCallbackId::ScriptsFinalize, OnScriptsFinalize);
-            CLEO_RegisterCallback(eCallbackId::ScriptDraw, OnScriptDraw);
-            CLEO_RegisterCallback(eCallbackId::MenuDraw, OnMenuDraw);
-            CLEO_RegisterCallback(eCallbackId::ScriptProcess, OnScriptProcess);
             CLEO_RegisterCallback(eCallbackId::Log, OnLog);
+            CLEO_RegisterCallback(eCallbackId::DrawingFinished, OnDrawingFinished);
+            CLEO_RegisterCallback(eCallbackId::ScriptProcess, OnScriptProcess);
+            CLEO_RegisterCallback(eCallbackId::ScriptsFinalize, OnScriptsFinalize);
         }
         else
         {
@@ -75,35 +74,35 @@ public:
         logFiles.clear(); // close all
     }
 
-    static void WINAPI OnScriptDraw(bool beforeFade)
-    {
-        if (beforeFade) return; // skip drawing before fade pass
-
-        OnMenuDraw();
-    }
-
-    static void WINAPI OnMenuDraw()
+    static void WINAPI OnDrawingFinished()
     {
         // log messages
         screenLog.Draw();
 
         // draw active breakpoints list
-        for (size_t i = 0; i < pausedScripts.size(); i++)
+        if(!pausedScripts.empty())
         {
-            std::ostringstream ss;
-            ss << "Script '" << pausedScripts[i].ptr->GetName() << "' breakpoint";
-
-            if(!pausedScripts[i].msg.empty()) // named breakpoint
+            for (size_t i = 0; i < pausedScripts.size(); i++)
             {
-                ss << " '" << pausedScripts[i].msg << "'";
+                std::ostringstream ss;
+                ss << "Script '" << pausedScripts[i].ptr->GetName() << "' breakpoint";
+
+                if(!pausedScripts[i].msg.empty()) // named breakpoint
+                {
+                    ss << " '" << pausedScripts[i].msg << "'";
+                }
+
+                if(i < KeyCount)
+                {
+                    ss << " (F" << 5 + i << ")";
+                }
+
+                screenLog.DrawLine(ss.str().c_str(), i);
             }
 
-            if(i < KeyCount)
-            {
-                ss << " (F" << 5 + i << ")";
-            }
-
-            screenLog.DrawLine(ss.str().c_str(), i);
+            // for some reason last string on print list is always drawn incorrectly
+            // Walkaround: add one extra dummy line then
+            screenLog.DrawLine("_~n~_~n~_", 500);
         }
 
         // update keys state

@@ -130,7 +130,7 @@ enum class eCallbackId : DWORD
 	ScriptsFinalize, // void WINAPI OnScriptsFinalize();
 	ScriptProcess, // bool WINAPI OnScriptProcess(CRunningScript* pScript); // return false to skip this script processing
 	ScriptDraw, // void WINAPI OnScriptDraw(bool beforeFade);
-	MenuDraw, // void WINAPI OnMenuDraw();
+	DrawingFinished, // void WINAPI OnDrawingFinished(); // called after game rendered everything and before presenting screen buffer
 	Log, // void OnLog(eLogLevel level, const char* msg);
 };
 

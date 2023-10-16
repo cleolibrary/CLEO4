@@ -94,15 +94,23 @@ void ScreenLog::Draw()
     }
 
     float elapsed = 0.001f * (CTimer::m_snTimeInMilliseconds - CTimer::m_snPreviousTimeInMilliseconds);
+    float elapsedAlt = elapsed;
     float rowTime = -0.001f * timeFadeout;
-    for(auto it = entries.rbegin(); it != entries.rend(); it++)
+    for(auto it = entries.rbegin(); it != entries.rend(); it++) // draw from oldest
     {
         auto& entry = *it;
 
-        if(entry.timeLeft > 0.0f && entry.timeLeft < elapsed)
-            entry.timeLeft = 0.0f; // do not skip fade
+        if(entry.timeLeft > 0.0f)
+        {
+            if(entry.timeLeft < elapsedAlt)
+                entry.timeLeft = 0.0f; // do not skip fade
+            else
+                entry.timeLeft -= elapsedAlt;
+        }
         else
-            entry.timeLeft -= elapsed;
+            entry.timeLeft -= elapsed; // fade out
+
+        elapsedAlt *= 0.98f; // keep every next line longer
 
         rowTime = max(rowTime, entry.timeLeft); // carred on from older entries
         
@@ -129,6 +137,10 @@ void ScreenLog::Draw()
         float y = posY + 18.0f * sizeY * lines;
         CFont::PrintString(posX, y, entry.msg.c_str());
     }
+
+    // for some reason last string on print list is always drawn incorrectly
+    // Walkaround: add one extra dummy line then
+    CFont::PrintString(0.0f, -500.0f, "_~n~_~n~_"); 
 }
 
 void ScreenLog::DrawLine(const char* msg, size_t row)

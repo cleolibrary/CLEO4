@@ -48,6 +48,8 @@ namespace CLEO
         void AddCallback(eCallbackId id, void* func);
         const std::set<void*>& GetCallbacks(eCallbackId id);
 
+        static void __cdecl OnDrawingFinished();
+
         void(__cdecl * UpdateGameLogics)();
         static void __cdecl OnUpdateGameLogics();
     };

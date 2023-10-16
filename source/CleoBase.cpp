@@ -47,6 +47,8 @@ namespace CLEO
         OpcodeSystem.Inject(CodeInjector);
         ScriptEngine.Inject(CodeInjector);
 
+        CodeInjector.ReplaceFunction(OnDrawingFinished, 0x00734640); // nullsub_63 - originally something like renderDebugStuff?
+
         m_bStarted = true;
     }
 
@@ -70,6 +72,16 @@ namespace CLEO
     void WINAPI CLEO_RegisterCallback(eCallbackId id, void* func)
     {
         GetInstance().AddCallback(id, func);
+    }
+
+    void __cdecl CCleoInstance::OnDrawingFinished()
+    {
+        // execute callbacks
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::DrawingFinished))
+        {
+            typedef void WINAPI callback(void);
+            ((callback*)func)();
+        }
     }
 }
 
