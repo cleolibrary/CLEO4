@@ -1273,6 +1273,7 @@ namespace CLEO {
 			if (csscript->IsCustom())
 				cs->SetCompatibility(csscript->GetCompatibility());
 			GetInstance().ScriptEngine.AddCustomScript(cs);
+			memset(missionLocals, 0, 1024 * sizeof(SCRIPT_VAR)); // same as CTheScripts::WipeLocalVariableMemoryForMissionScript
 			TransmitScriptParams(thread, (CRunningScript*)((BYTE*)missionLocals - 0x3C));
 			cs->SetDebugMode(reinterpret_cast<CCustomScript*>(thread)->GetDebugMode());
 		}

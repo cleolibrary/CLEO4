@@ -23,6 +23,7 @@
 - fixed handling of strings longer than 128 characters causing errors in some cases
 - fixed error in handling of first string argument in 0AF5 (write_string to_ini_file)
 - fixed resolution dependent aspect ratio of CLEO text in main menu
+- fixed clearing mission locals when new CLEO mission is started
 #### SDK AND PLUGINS
 - now all opcodes in range 0-7FFF can be registered by plugins
 - plugins moved to cleo\cleo_plugins directory
