@@ -519,10 +519,10 @@ namespace CLEO {
 	}
 
 	// read string parameter according to convention on strings
-	char* ReadStringParam(CRunningScript *thread, char* buf = nullptr, BYTE size = 0)
+	char* ReadStringParam(CRunningScript *thread, char* buf, DWORD bufSize)
 	{
-		if (size == 0) size = MAX_STR_LEN;
-		if(buf != nullptr) memset(buf, 0, size);
+		static char internal_buf[MAX_STR_LEN];
+		if (!buf) { buf = internal_buf; bufSize = MAX_STR_LEN; }
 
 		auto paramType = CLEO_GetOperandType(thread);
 		switch(paramType)
@@ -533,13 +533,20 @@ namespace CLEO {
 			case DT_LVAR:
 			case DT_VAR_ARRAY:
 			case DT_LVAR_ARRAY:
+			{
 				GetScriptParams(thread, 1);
-				if (buf != nullptr)
-				{
-					strncpy(buf, opcodeParams[0].pcParam, size - 1);
-					buf[size - 1] = '\0';
-				}
-				return opcodeParams[0].pcParam; // original string pointer
+				char* str = opcodeParams[0].pcParam;
+
+				size_t length = strlen(str);
+				if(bufSize > 0)
+					length = min(length, bufSize - 1); // minus terminator char
+				else
+					length = 0; // no target buffer
+
+				if (length) strncpy(buf, str, length);
+				if (bufSize > 0) buf[length] = '\0'; // string terminator
+				return buf;
+			}
 
 			// short string variable
 			case DT_VAR_TEXTLABEL:
@@ -558,33 +565,28 @@ namespace CLEO {
 			case DT_STRING:
 			case DT_VARLEN_STRING:
 			{
-				if (buf == nullptr) // provide buffer if not specified
-				{
-					static char result[MAX_STR_LEN];
-					buf = result;
-					size = sizeof(result);
-					memset(buf, 0, size);
-				}
-
 				if (paramType == DT_VARLEN_STRING)
 				{
 					// prococess here as GetScriptStringParam can not obtain strings with lenght greater than 128
 					thread->IncPtr(1); // already processed paramType
 
-					BYTE length = *thread->GetBytePointer(); // as unsigned!
-					thread->IncPtr(1); // length
+					DWORD length = (BYTE)*thread->GetBytePointer(); // as unsigned byte! 
+					thread->IncPtr(1); // length info
 
-					if (length > 0)
-					{
-						auto count = min(size, length);
-						memcpy(buf, thread->GetBytePointer(), count);
+					char* str = (char*)thread->GetBytePointer();
+					thread->IncPtr(length); // text data
 
-						thread->IncPtr(length); // skip read data
-					}
+					if (bufSize > 0)
+						length = min(length, bufSize - 1); // minus terminator char
+					else
+						length = 0; // no target buffer
+
+					if (length) strncpy(buf, str, length);
+					if (bufSize > 0) buf[length] = '\0'; // string terminator
 				}
 				else
 				{
-					GetScriptStringParam(thread, buf, size); // standard game's function
+					GetScriptStringParam(thread, buf, (BYTE)min(bufSize, 0xFF)); // standard game's function
 				}
 
 				return buf;
@@ -650,7 +652,7 @@ namespace CLEO {
 	}
 
 	// perform 'sprintf'-operation for parameters, passed through SCM
-	int ReadFormattedString(CRunningScript *thread, char *outputStr, size_t len, const char *format)
+	int ReadFormattedString(CRunningScript *thread, char *outputStr, DWORD len, const char *format)
 	{
 		unsigned int written = 0;
 		const char *iter = format;
@@ -2884,10 +2886,6 @@ extern "C"
 
 	LPSTR WINAPI CLEO_ReadStringPointerOpcodeParam(CLEO::CRunningScript* thread, char *buf, int size)
 	{
-		static char internal_buf[MAX_STR_LEN];
-		if (!buf) { buf = internal_buf; size = MAX_STR_LEN; }
-		if (!size) size = MAX_STR_LEN;
-		std::fill(buf, buf + size, '\0');
 		return ReadStringParam(thread, buf, size);
 	}
 

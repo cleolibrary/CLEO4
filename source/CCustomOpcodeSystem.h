@@ -62,8 +62,8 @@ namespace CLEO
 
     extern void(__thiscall * ProcessScript)(CRunningScript*);
     
-    char* ReadStringParam(CRunningScript* thread, char* buf, BYTE size);
+    char* ReadStringParam(CRunningScript* thread, char* buf = nullptr, DWORD bufSize = 0);
     bool WriteStringParam(CRunningScript* thread, const char* str);
-    int ReadFormattedString(CRunningScript* thread, char* outputStr, size_t len, const char* format);
+    int ReadFormattedString(CRunningScript* thread, char* buf, DWORD bufSize, const char* format);
     void SkipUnusedParameters(CRunningScript* thread); // for var-args opcodes
 }
