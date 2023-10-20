@@ -229,7 +229,7 @@ public:
             CTimer::m_CodePause = true;
         }
 
-        return OR_CONTINUE;
+        return OR_INTERRUPT;
     }
 
     // 00CD=-1, trace %1s% ...

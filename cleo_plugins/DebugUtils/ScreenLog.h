@@ -48,7 +48,7 @@ private:
         {
             if(msg != nullptr)
             {
-                timeLeft = min(strlen(msg), 200) * 0.06f; // 17 letters peer second reading speed
+                timeLeft = min(strlen(msg), 200) * 0.08f; // 12 letters peer second reading speed
                 timeLeft = max(timeLeft, 0.001f * durationMs);
 
                 auto len = strlen(msg);
