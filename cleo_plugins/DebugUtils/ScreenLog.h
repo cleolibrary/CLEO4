@@ -9,6 +9,8 @@ using namespace CLEO;
 class ScreenLog
 {
 public:
+    static DWORD timeDisplay; // miliseconds
+
     ScreenLog();
 
     void Init();
@@ -20,8 +22,7 @@ private:
     eLogLevel level;
     size_t maxMessages;
     float fontSize;
-    DWORD timeDisplay;
-    DWORD timeFadeout;
+    DWORD timeFadeout; // miliseconds
 
     const CRGBA fontColor[4] = { // colors for eLogLevel
         CRGBA(0xDD, 0xDD, 0xDD, 0xF0), // None
@@ -34,40 +35,84 @@ private:
     {
         eLogLevel level;
         std::string msg;
+        size_t msgStartPos;
         float timeLeft;
+        size_t repeats;
+
+        static const size_t Repeat_Prefix_Len = 16; // extra characters for repeat count text
 
         Entry() :
             level(eLogLevel::Default),
             msg(""),
-            timeLeft(0.0f)
+            timeLeft(0.0f),
+            repeats(1)
         {
         }
 
-        Entry(eLogLevel level, const char* msg, DWORD durationMs) :
-            level(level)
+        Entry(eLogLevel level, const char* msg) :
+            level(level), 
+            repeats(1)
         {
             if(msg != nullptr)
             {
-                timeLeft = min(strlen(msg), 200) * 0.08f; // 12 letters peer second reading speed
-                timeLeft = max(timeLeft, 0.001f * durationMs);
-
                 auto len = strlen(msg);
-                this->msg.reserve(len);
+                this->msg.reserve(Repeat_Prefix_Len + len);
 
+                // repeat prefix
+                this->msg.resize(Repeat_Prefix_Len - 2);
+                this->msg.push_back(':');
+                this->msg.push_back(' ');
+                msgStartPos = Repeat_Prefix_Len; // prefix not present
+
+                // copy input message
                 for(size_t i = 0; i < len; i++)
                 {
-                    char c = msg[i];
+                    const char c = msg[i];
+                    switch(c)
+                    {
+                        case '\n':
+                            this->msg += "~n~";
+                            break;
 
-                    if(c == '\n')
-                        this->msg += "~n~";
-                    else
-                        this->msg.push_back(c);
+                        // characters not represented correctly by game's font texture
+                        case '{':
+                        case '}':
+                            this->msg.push_back('_');
+                            break;
+                            
+                        default:
+                            this->msg.push_back(c);
+                    }
                 }
             }
-            else
-            {
-                timeLeft = 0.0f;
-            }
+
+            ResetTime();
+        }
+
+        void Repeat()
+        {
+            ResetTime();
+            repeats++;
+
+            std::string prefix = "x" + std::to_string(repeats);
+            msgStartPos = Repeat_Prefix_Len - 2 - prefix.length(); // and ": "
+            msg.replace(msgStartPos, prefix.length(), prefix);
+        }
+
+        void ResetTime()
+        {
+            timeLeft = min(msg.length(), 200) * 0.08f; // 12 letters peer second reading speed
+            timeLeft = max(timeLeft, 0.001f * ScreenLog::timeDisplay); // not shorter than defined in config
+        }
+
+        const char* GetMsg(bool prefix = true) const
+        {
+            return msg.c_str() + (prefix ? msgStartPos : Repeat_Prefix_Len);
+        }
+
+        bool operator==(const Entry& other) const
+        {
+            return level == other.level && !strcmp(GetMsg(false), other.GetMsg(false));
         }
     };
 

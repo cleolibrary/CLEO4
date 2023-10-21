@@ -22,13 +22,19 @@ namespace CLEO
         static const size_t LastOriginalOpcode = 0x0A4E; // GTA SA
         static const size_t LastCustomOpcode = 0x7FFF;
 
+        // most recently processed
+        static CRunningScript* lastScript;
+        static WORD lastOpcode;
+        static WORD* lastOpcodePtr;
+        static WORD lastCustomOpcode;
+        
         void FinalizeScriptObjects();
 
         CCustomOpcodeSystem();
         virtual void Inject(CCodeInjector& inj);
         ~CCustomOpcodeSystem()
         {
-            //TRACE("Last opcode executed %04X at %s:%d", last_opcode, last_thread, last_off);
+            //TRACE("Last opcode executed %04X at %s:%d", lastOpcode, lastScript, lastOpcodePtr);
         }
 
         static bool RegisterOpcode(WORD opcode, CustomOpcodeHandler callback);

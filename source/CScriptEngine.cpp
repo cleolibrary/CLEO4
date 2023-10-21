@@ -734,11 +734,20 @@ namespace CLEO
             if(false)
             {
                 // TODO: get Sanny's SMC extra info
+                ss << "line " << 0;
+                ss << " - ";
+                ss << "CODE";
             }
             else
             {
-                auto address = (DWORD)CurrentIP - (DWORD)BaseIP;
-                ss << "0x" << std::hex << std::uppercase << /*std::setw(4) << std::setfill('0') <<*/ address;
+                auto address = (DWORD)BaseIP;
+                if (address == 0) address = GetInstance().VersionManager.TranslateMemoryAddress(MA_SCM_BLOCK);
+                //address = (DWORD)CurrentIP - address; // processed position
+                address = (DWORD)CCustomOpcodeSystem::lastOpcodePtr - address; // opcode position
+
+                ss << "offset {" << address << "}"; // Sanny offsets style
+                ss << " - ";
+                ss << std::hex << std::uppercase << std::setw(4) << std::setfill('0') << CCustomOpcodeSystem::lastOpcode << ": ...";
             }
         }
 

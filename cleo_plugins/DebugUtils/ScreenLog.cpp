@@ -3,10 +3,11 @@
 #include "CFont.h"
 #include "CTimer.h"
 
+DWORD ScreenLog::timeDisplay = 1000;
+
 ScreenLog::ScreenLog()
 {
     scrollOffset = 0.0f;
-
     Init();
 }
 
@@ -29,17 +30,27 @@ void ScreenLog::Add(eLogLevel level, const char* msg)
         return;
     }
 
-    entries.emplace_front(level, msg, timeDisplay);
-
-    if (entries.size() > maxMessages)
+    Entry entry(level, msg);
+    if(!entries.empty() && entries.front() == entry)
     {
-        entries.resize(maxMessages);
+        entries.front().Repeat(); // duplicated
     }
+    else
+    {
+        entries.push_front(std::move(entry));
 
-    // update scroll pos
-    float sizeY = fontSize * RsGlobal.maximumHeight / 448.0f;
-    size_t lines = CountLines(std::string(msg));
-    scrollOffset += 18.0f * lines * sizeY;
+        bool full = entries.size() >= maxMessages;
+        if (full) entries.resize(maxMessages);
+
+        // update scroll pos
+        float sizeY = fontSize * RsGlobal.maximumHeight / 448.0f;
+        size_t lines = CountLines(std::string(msg));
+
+        if(!full)
+            scrollOffset += 18.0f * lines * sizeY;
+        else
+            scrollOffset = 0.0f; // do not animate if list was full
+    }
 }
 
 void ScreenLog::Draw()
@@ -135,7 +146,8 @@ void ScreenLog::Draw()
 
         lines -= CountLines(entry.msg);
         float y = posY + 18.0f * sizeY * lines;
-        CFont::PrintString(posX, y, entry.msg.c_str());
+
+        CFont::PrintString(posX, y, entry.GetMsg());
     }
 
     // for some reason last string on print list is always drawn incorrectly

@@ -157,11 +157,10 @@ namespace CLEO {
 
 	void(__cdecl * SpawnCar)(DWORD);
 
-	WORD last_opcode = 0;
-	WORD last_custom_opcode = 0;
-	char last_thread[8] = "none";
-	CRunningScript * last_script;
-	ptrdiff_t last_off = -1;
+	CRunningScript* CCustomOpcodeSystem::lastScript = nullptr;
+	WORD CCustomOpcodeSystem::lastOpcode = 0;
+	WORD* CCustomOpcodeSystem::lastOpcodePtr = nullptr;
+	WORD CCustomOpcodeSystem::lastCustomOpcode = 0;
 
 	// opcode handler for custom opcodes
 	OpcodeResult __fastcall CCustomOpcodeSystem::customOpcodeHandler(CRunningScript *thread, int dummy, WORD opcode)
@@ -169,6 +168,10 @@ namespace CLEO {
 		/*std::ostringstream ss;
 		ss << thread->GetName() << " opcode " << opcodeToStr(opcode) << std::endl;
 		OutputDebugStringA(ss.str().c_str());//*/
+
+		lastScript = thread;
+		lastOpcode = opcode;
+		lastOpcodePtr = (WORD*)thread->GetBytePointer() - 1; // rewind to the opcode start
 
 		if(opcode > LastCustomOpcode)
 		{
@@ -179,8 +182,7 @@ namespace CLEO {
 		CustomOpcodeHandler handler = customOpcodeProc[opcode];
 		if(handler != nullptr)
 		{
-			last_custom_opcode = opcode;
-			last_script = thread;
+			lastCustomOpcode = opcode;
 			return handler(thread);
 		}
 
