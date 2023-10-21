@@ -190,7 +190,7 @@ public:
     {
         if (!CLEO_GetScriptDebugMode(thread))
         {
-            SkipUnusedParams(thread);
+            CLEO_SkipUnusedVarArgs(thread);
             return OR_CONTINUE;
         }
 
@@ -237,7 +237,7 @@ public:
     {
         if (!CLEO_GetScriptDebugMode(thread))
         {
-            SkipUnusedParams(thread);
+            CLEO_SkipUnusedVarArgs(thread);
             return OR_CONTINUE;
         }
 
@@ -279,7 +279,7 @@ public:
             ss << "Failed to open log file '" << filename << "'";
             CLEO_Log(eLogLevel::Error, ss.str().c_str());
 
-            SkipUnusedParams(thread);
+            CLEO_SkipUnusedVarArgs(thread);
             return OR_CONTINUE;
         }
 

@@ -27,13 +27,16 @@
 #### SDK AND PLUGINS
 - now all opcodes in range 0-7FFF can be registered by plugins
 - plugins moved to cleo\cleo_plugins directory
-- new SDK method: CLEO_ResolvePath
 - new SDK method: CLEO_RegisterCallback
+- new SDK method: CLEO_GetVarArgCount
+- new SDK method: CLEO_SkipUnusedVarArgs
+- new SDK method: CLEO_ReadParamsFormatted
 - new SDK method: CLEO_GetScriptVersion
+- new SDK method: CLEO_GetScriptInfoStr
+- new SDK method: CLEO_ResolvePath
 - new SDK method: CLEO_GetScriptDebugMode
 - new SDK method: CLEO_SetScriptDebugMode
 - new SDK method: CLEO_Log
-- new SDK method: CLEO_ReadParamsFormatted	
 #### CLEO internal
 - updated project settings
 - updated general methods for getting and setting string parameters

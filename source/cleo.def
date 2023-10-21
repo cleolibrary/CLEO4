@@ -27,11 +27,13 @@ EXPORTS
 	_CLEO_GetLastCreatedCustomScript@0		@24
 	_CLEO_AddScriptDeleteDelegate@4			@25
 	_CLEO_RemoveScriptDeleteDelegate@4		@26
-	_CLEO_ResolvePath@12					@27
-	_CLEO_GetScriptVersion@4				@28
-	_CLEO_RegisterCallback@8				@29
-	_CLEO_GetScriptDebugMode@4				@30
-	_CLEO_SetScriptDebugMode@8				@31
-	_CLEO_Log@8								@32
-	_CLEO_ReadParamsFormatted@16			@33
-
+	_CLEO_RegisterCallback@8				@27
+	_CLEO_GetVarArgCount@4					@28
+	_CLEO_SkipUnusedVarArgs@4				@29
+	_CLEO_ReadParamsFormatted@16			@30
+	_CLEO_GetScriptVersion@4				@31
+	_CLEO_GetScriptInfoStr@16				@32
+	_CLEO_ResolvePath@12					@33
+	_CLEO_GetScriptDebugMode@4				@34
+	_CLEO_SetScriptDebugMode@8				@35
+	_CLEO_Log@8								@36

@@ -65,5 +65,6 @@ namespace CLEO
     char* ReadStringParam(CRunningScript* thread, char* buf = nullptr, DWORD bufSize = 0);
     bool WriteStringParam(CRunningScript* thread, const char* str);
     int ReadFormattedString(CRunningScript* thread, char* buf, DWORD bufSize, const char* format);
-    void SkipUnusedParameters(CRunningScript* thread); // for var-args opcodes
+    void SkipUnusedVarArgs(CRunningScript* thread); // for var-args opcodes
+    DWORD GetVarArgCount(CRunningScript* thread); // for var-args opcodes
 }

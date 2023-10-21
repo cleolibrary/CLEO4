@@ -811,7 +811,7 @@ namespace CLEO {
 		{
 			LOG_WARNING("Read formatted string: Found more params than format slots in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
 		}
-		SkipUnusedParameters(thread); // skip terminator too
+		SkipUnusedVarArgs(thread); // skip terminator too
 
 		*outputStr++ = '\0';
 		return (int)written;
@@ -998,12 +998,27 @@ namespace CLEO {
 		thread->SetIp(off < 0 ? thread->GetBasePointer() - off : scmBlock + off);
 	}
 
-	void SkipUnusedParameters(CRunningScript *thread)
+	void SkipUnusedVarArgs(CRunningScript *thread)
 	{
-		while (CLEO_GetOperandType(thread) != DT_END) 
-			GetScriptParams(thread, 1); // skip param
+		while (CLEO_GetOperandType(thread) != DT_END)
+			CLEO_SkipOpcodeParams(thread, 1);
 
-		thread->ReadDataByte(); // skip terminator
+		thread->IncPtr(); // skip terminator
+	}
+
+	DWORD GetVarArgCount(CRunningScript* thread)
+	{
+		const auto ip = thread->GetBytePointer();
+
+		DWORD count = 0;
+		while (CLEO_GetOperandType(thread) != DT_END)
+		{
+			CLEO_SkipOpcodeParams(thread, 1);
+			count++;
+		}
+
+		thread->SetIp(ip); // restore
+		return count;
 	}
 
 	struct ScmFunction
@@ -1240,7 +1255,7 @@ namespace CLEO {
 		else
 		{
 			if (cs) delete cs;
-			SkipUnusedParameters(thread);
+			SkipUnusedVarArgs(thread);
 			LOG_WARNING("Failed to load script '%s' in script ", filename.c_str(), ((CCustomScript*)thread)->GetInfoStr().c_str());
 		}
 
@@ -1282,7 +1297,7 @@ namespace CLEO {
 		else
 		{
 			if (cs) delete cs;
-			SkipUnusedParameters(thread);
+			SkipUnusedVarArgs(thread);
 			LOG_WARNING("[0A94] Failed to load mission '%s' from script '%s'.", filename.c_str(), thread->GetName());
 		}
 
@@ -1557,7 +1572,7 @@ namespace CLEO {
 				add esp, stackAlign
 		}
 
-		SkipUnusedParameters(thread);
+		SkipUnusedVarArgs(thread);
 		return OR_CONTINUE;
 	}
 
@@ -1617,7 +1632,7 @@ namespace CLEO {
 				add esp, stackAlign
 		}
 
-		SkipUnusedParameters(thread);
+		SkipUnusedVarArgs(thread);
 		return OR_CONTINUE;
 	}
 
@@ -1680,7 +1695,7 @@ namespace CLEO {
 		}
 
 		*thread << result;
-		SkipUnusedParameters(thread);
+		SkipUnusedVarArgs(thread);
 		return OR_CONTINUE;
 	}
 
@@ -1745,7 +1760,7 @@ namespace CLEO {
 		}
 
 		*thread << result;
-		SkipUnusedParameters(thread);
+		SkipUnusedVarArgs(thread);
 		return OR_CONTINUE;
 	}
 
@@ -1955,7 +1970,7 @@ namespace CLEO {
 		if (nParams > 32) 
 			GetScriptParams(thread, nParams - 32);
 
-		// all areguments read
+		// all arguments read
 		scmFunc->retnAddress = thread->GetBytePointer();
 
 		// pass arguments as new scope local variables
@@ -1981,18 +1996,24 @@ namespace CLEO {
 	{
 		ScmFunction *scmFunc = ScmFunction::Store[reinterpret_cast<CCustomScript*>(thread)->GetScmFunction()];
 		
-		DWORD nRetParams = 0;
-		if (*thread->GetBytePointer()) *thread >> nRetParams;
+		DWORD returnParamCount = 0;
+		if (*thread->GetBytePointer()) *thread >> returnParamCount;
+		if (returnParamCount) GetScriptParams(thread, returnParamCount);
 
-		if (nRetParams) GetScriptParams(thread, nRetParams);
-		scmFunc->Return(thread);
-		if (nRetParams) SetScriptParams(thread, nRetParams);
-		SkipUnusedParameters(thread);
-
-		if(scmFunc->moduleExportRef != nullptr)
-			GetInstance().ModuleSystem.ReleaseModuleRef((char*)scmFunc->moduleExportRef); // exiting export - release module
-
+		scmFunc->Return(thread); // jump back to cleo_call, right after last input param. Return slot var args starts here
+		if (scmFunc->moduleExportRef != nullptr) GetInstance().ModuleSystem.ReleaseModuleRef((char*)scmFunc->moduleExportRef); // export - release module
 		delete scmFunc;
+
+		DWORD returnSlotCount = GetVarArgCount(thread);
+		if (returnSlotCount > returnParamCount)
+		{
+			SHOW_ERROR("Opcode [0AB2] returned fewer params than expected by function caller in script %s\nScript suspended.", ((CCustomScript*)thread)->GetInfoStr().c_str());
+			return CCustomOpcodeSystem::ErrorSuspendScript(thread);
+		}
+
+		if (returnSlotCount) SetScriptParams(thread, returnSlotCount);
+		thread->IncPtr(); // skip var args terminator
+
 		return OR_CONTINUE;
 	}
 
@@ -2904,7 +2925,7 @@ extern "C"
 		if(format != nullptr && strlen(format) > 0)
 			ReadFormattedString(thread, buf, size, format);
 		else
-			SkipUnusedParameters(thread);
+			SkipUnusedVarArgs(thread);
 
 		return buf;
 	}
@@ -2912,6 +2933,11 @@ extern "C"
 	void WINAPI CLEO_SetThreadCondResult(CLEO::CRunningScript* thread, BOOL result)
 	{
 		SetScriptCondResult(thread, result != FALSE);
+	}
+
+	DWORD WINAPI CLEO_GetVarArgCount(CLEO::CRunningScript* thread)
+	{
+		return GetVarArgCount(thread);
 	}
 
 	void WINAPI CLEO_SkipOpcodeParams(CLEO::CRunningScript* thread, int count)
@@ -2954,6 +2980,11 @@ extern "C"
 				break;
 			}
 		}
+	}
+
+	void WINAPI CLEO_SkipUnusedVarArgs(CLEO::CRunningScript* thread)
+	{
+		SkipUnusedVarArgs(thread);
 	}
 
 	void WINAPI CLEO_ThreadJumpAtLabelPtr(CLEO::CRunningScript* thread, int labelPtr)
@@ -3024,7 +3055,7 @@ extern "C"
 		else
 		{
 			if (cs) delete cs;
-			if (fromThread) SkipUnusedParameters(fromThread);
+			if (fromThread) SkipUnusedVarArgs(fromThread);
 			LOG_WARNING("Failed to load script '%s'.", script_name);
 			return nullptr;
 		}

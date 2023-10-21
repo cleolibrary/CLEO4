@@ -1154,10 +1154,24 @@ namespace CLEO
         }
         AddScriptToQueue(cs, activeThreadQueue);
         cs->SetActive(true);
+
+        // run registered callbacks
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScriptRegister))
+        {
+            typedef void WINAPI callback(CCustomScript*);
+            ((callback*)func)(cs);
+        }
     }
 
     void CScriptEngine::RemoveCustomScript(CCustomScript *cs)
     {
+        // run registered callbacks
+        for (void* func : GetInstance().GetCallbacks(eCallbackId::ScriptUnregister))
+        {
+            typedef void WINAPI callback(CCustomScript*);
+            ((callback*)func)(cs);
+        }
+
 		if (cs->parentThread)
 		{
 			cs->BaseIP = 0; // don't delete BaseIP if child thread
