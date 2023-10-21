@@ -429,6 +429,23 @@ namespace CLEO {
 
 	inline CRunningScript& operator>>(CRunningScript& thread, DWORD& uval)
 	{
+		auto paramType = (eDataType)*thread.GetBytePointer();
+		switch(paramType)
+		{
+			// integers
+			case DT_BYTE:
+			case DT_WORD:
+			case DT_DWORD:
+			case DT_LVAR:
+			case DT_LVAR_ARRAY:
+			case DT_VAR:
+			case DT_VAR_ARRAY:
+				break;
+
+			default:
+				LOG_WARNING("Reading integer from invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)&thread)->GetInfoStr().c_str());
+		}
+
 		GetScriptParams(&thread, 1);
 		uval = opcodeParams[0].dwParam;
 		return thread;
@@ -436,6 +453,23 @@ namespace CLEO {
 
 	inline CRunningScript& operator<<(CRunningScript& thread, DWORD uval)
 	{
+		auto paramType = (eDataType)*thread.GetBytePointer();
+		switch (paramType)
+		{
+			// integers
+			/*case DT_BYTE:
+			case DT_WORD:
+			case DT_DWORD:*/
+			case DT_LVAR:
+			case DT_LVAR_ARRAY:
+			case DT_VAR:
+			case DT_VAR_ARRAY:
+				break;
+
+			default:
+				LOG_WARNING("Writing integer into invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)&thread)->GetInfoStr().c_str());
+		}
+
 		opcodeParams[0].dwParam = uval;
 		SetScriptParams(&thread, 1);
 		return thread;
@@ -443,6 +477,23 @@ namespace CLEO {
 
 	inline CRunningScript& operator>>(CRunningScript& thread, int& nval)
 	{
+		auto paramType = (eDataType)*thread.GetBytePointer();
+		switch (paramType)
+		{
+			// integers
+			case DT_BYTE:
+			case DT_WORD:
+			case DT_DWORD:
+			case DT_LVAR:
+			case DT_LVAR_ARRAY:
+			case DT_VAR:
+			case DT_VAR_ARRAY:
+				break;
+
+			default:
+				LOG_WARNING("Reading integer from invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)&thread)->GetInfoStr().c_str());
+		}
+
 		GetScriptParams(&thread, 1);
 		nval = opcodeParams[0].nParam;
 		return thread;
@@ -450,6 +501,23 @@ namespace CLEO {
 
 	inline CRunningScript& operator<<(CRunningScript& thread, int nval)
 	{
+		auto paramType = (eDataType)*thread.GetBytePointer();
+		switch (paramType)
+		{
+			// integers
+			/*case DT_BYTE:
+			case DT_WORD:
+			case DT_DWORD:*/
+			case DT_LVAR:
+			case DT_LVAR_ARRAY:
+			case DT_VAR:
+			case DT_VAR_ARRAY:
+				break;
+
+			default:
+				LOG_WARNING("Writing integer into invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)&thread)->GetInfoStr().c_str());
+		}
+
 		opcodeParams[0].nParam = nval;
 		SetScriptParams(&thread, 1);
 		return thread;
@@ -457,6 +525,20 @@ namespace CLEO {
 
 	inline CRunningScript& operator>>(CRunningScript& thread, float& fval)
 	{
+		auto paramType = (eDataType)*thread.GetBytePointer();
+		switch (paramType)
+		{
+			case DT_FLOAT:
+			case DT_LVAR:
+			case DT_LVAR_ARRAY:
+			case DT_VAR:
+			case DT_VAR_ARRAY:
+				break;
+
+			default:
+				LOG_WARNING("Reading float from invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)&thread)->GetInfoStr().c_str());
+		}
+
 		GetScriptParams(&thread, 1);
 		fval = opcodeParams[0].fParam;
 		return thread;
@@ -464,6 +546,19 @@ namespace CLEO {
 
 	inline CRunningScript& operator<<(CRunningScript& thread, float fval)
 	{
+		auto paramType = (eDataType)*thread.GetBytePointer();
+		switch (paramType)
+		{
+			case DT_LVAR:
+			case DT_LVAR_ARRAY:
+			case DT_VAR:
+			case DT_VAR_ARRAY:
+				break;
+
+			default:
+				LOG_WARNING("Writing float into invalid argument type (%02X) in script %s", paramType, ((CCustomScript*)&thread)->GetInfoStr().c_str());
+		}
+
 		opcodeParams[0].fParam = fval;
 		SetScriptParams(&thread, 1);
 		return thread;
@@ -1639,7 +1734,6 @@ namespace CLEO {
 		{
 			switch (*thread->GetBytePointer())
 			{
-			case DT_FLOAT:
 			case DT_DWORD:
 			case DT_WORD:
 			case DT_BYTE:
@@ -1649,12 +1743,18 @@ namespace CLEO {
 			case DT_LVAR_ARRAY:
 				*thread >> arg->dwParam;
 				break;
+
+			case DT_FLOAT:
+				*thread >> arg->fParam;
+				break;
+
 			case DT_VAR_STRING:
 			case DT_LVAR_STRING:
 			case DT_VAR_TEXTLABEL:
 			case DT_LVAR_TEXTLABEL:
 				arg->pParam = GetScriptParamPointer(thread);
 				break;
+
 			case DT_VARLEN_STRING:
 			case DT_TEXTLABEL:
 				arg->pcParam = ReadStringParam(thread, textParams[currTextParam++], MAX_STR_LEN);
@@ -1704,7 +1804,6 @@ namespace CLEO {
 		{
 			switch (*thread->GetBytePointer())
 			{
-			case DT_FLOAT:
 			case DT_DWORD:
 			case DT_WORD:
 			case DT_BYTE:
@@ -1714,12 +1813,18 @@ namespace CLEO {
 			case DT_LVAR_ARRAY:
 				*thread >> arg->dwParam;
 				break;
+
+			case DT_FLOAT:
+				*thread >> arg->fParam;
+				break;
+
 			case DT_VAR_STRING:
 			case DT_LVAR_STRING:
 			case DT_VAR_TEXTLABEL:
 			case DT_LVAR_TEXTLABEL:
 				arg->pParam = GetScriptParamPointer(thread);
 				break;
+
 			case DT_VARLEN_STRING:
 			case DT_TEXTLABEL:
 				arg->pcParam = ReadStringParam(thread, textParams[currTextParam++], MAX_STR_LEN);
@@ -1919,7 +2024,6 @@ namespace CLEO {
 				
 			switch (*thread->GetBytePointer())
 			{
-			case DT_FLOAT:
 			case DT_DWORD:
 			case DT_WORD:
 			case DT_BYTE:
@@ -1928,6 +2032,10 @@ namespace CLEO {
 			case DT_VAR_ARRAY:
 			case DT_LVAR_ARRAY:
 				*thread >> arg->dwParam;
+				break;
+
+			case DT_FLOAT:
+				*thread >> arg->fParam;
 				break;
 
 			case DT_VAR_STRING:
