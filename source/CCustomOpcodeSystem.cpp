@@ -656,153 +656,162 @@ namespace CLEO {
 	{
 		unsigned int written = 0;
 		const char *iter = format;
+		char* outIter = outputStr;
 		char bufa[256], fmtbufa[64], *fmta;
 
-		while (*iter)
+		// invalid input arguments
+		if(outputStr == nullptr || len == 0) 
 		{
-			while (*iter && *iter != '%')
+			SkipUnusedParameters(thread);
+			return -1;
+		}
+
+		if(len > 1 && format != nullptr)
+		{
+			while (*iter)
 			{
-				if (written++ >= len)
-					return -1;
-				*outputStr++ = *iter++;
-			}
-
-			if (*iter == '%')
-			{
-				if (iter[1] == '%')
+				while (*iter && *iter != '%')
 				{
-					if (written++ >= len)
-						return -1;
-					*outputStr++ = '%'; /* "%%"->'%' */
-					iter += 2;
-					continue;
+					if (written++ >= len) goto _ReadFormattedString_OutOfMemory;
+					*outIter++ = *iter++;
 				}
 
-				//get flags and width specifier
-				fmta = fmtbufa;
-				*fmta++ = *iter++;
-				while (*iter == '0' ||
-					   *iter == '+' ||
-					   *iter == '-' ||
-					   *iter == ' ' ||
-					   *iter == '*' ||
-					   *iter == '#')
+				if (*iter == '%')
 				{
-					if (*iter == '*')
+					if (iter[1] == '%')
 					{
-						char *buffiter = bufa;
-
-						//get width
-						if (CLEO_GetOperandType(thread) == DT_END) goto ReadFormattedString_ArgMissing;
-						GetScriptParams(thread, 1);
-						_itoa(opcodeParams[0].dwParam, buffiter, 10);
-						while (*buffiter)
-							*fmta++ = *buffiter++;
+						if (written++ >= len) goto _ReadFormattedString_OutOfMemory;
+						*outIter++ = '%'; /* "%%"->'%' */
+						iter += 2;
+						continue;
 					}
-					else
-						*fmta++ = *iter;
-					iter++;
-				}
 
-				//get immidiate width value
-				while (isdigit(*iter))
+					//get flags and width specifier
+					fmta = fmtbufa;
 					*fmta++ = *iter++;
-
-				//get precision
-				if (*iter == '.')
-				{
-					*fmta++ = *iter++;
-					if (*iter == '*')
+					while (*iter == '0' ||
+						   *iter == '+' ||
+						   *iter == '-' ||
+						   *iter == ' ' ||
+						   *iter == '*' ||
+						   *iter == '#')
 					{
-						char *buffiter = bufa;
-						if (CLEO_GetOperandType(thread) == DT_END) goto ReadFormattedString_ArgMissing;
-						GetScriptParams(thread, 1);
-						_itoa(opcodeParams[0].dwParam, buffiter, 10);
-						while (*buffiter)
-							*fmta++ = *buffiter++;
-					}
-					else
-						while (isdigit(*iter))
-							*fmta++ = *iter++;
-				}
-				//get size
-				if (*iter == 'h' || *iter == 'l')
-					*fmta++ = *iter++;
-
-				switch (*iter)
-				{
-				case 's':
-				{
-					static const char none[] = "(null)";
-					if (CLEO_GetOperandType(thread) == DT_END) goto ReadFormattedString_ArgMissing;
-					const char *astr = ReadStringParam(thread);
-					const char *striter = astr ? astr : none;
-					while (*striter)
-					{
-						if (written++ >= len)
-							return -1;
-						*outputStr++ = *striter++;
-					}
-					iter++;
-					break;
-				}
-
-				case 'c':
-					if (written++ >= len)
-						return -1;
-					if (CLEO_GetOperandType(thread) == DT_END) goto ReadFormattedString_ArgMissing;
-					GetScriptParams(thread, 1);
-					*outputStr++ = (char)opcodeParams[0].nParam;
-					iter++;
-					break;
-
-				default:
-				{
-					/* For non wc types, use system sprintf and append to wide char output */
-					/* FIXME: for unrecognised types, should ignore % when printing */
-					char *bufaiter = bufa;
-					if (*iter == 'p' || *iter == 'P')
-					{
-						if (CLEO_GetOperandType(thread) == DT_END) goto ReadFormattedString_ArgMissing;
-						GetScriptParams(thread, 1);
-						sprintf(bufaiter, "%08X", opcodeParams[0].dwParam);
-					}
-					else
-					{
-						*fmta++ = *iter;
-						*fmta = '\0';
-						if (*iter == 'a' || *iter == 'A' ||
-							*iter == 'e' || *iter == 'E' ||
-							*iter == 'f' || *iter == 'F' ||
-							*iter == 'g' || *iter == 'G')
+						if (*iter == '*')
 						{
-							if (CLEO_GetOperandType(thread) == DT_END) goto ReadFormattedString_ArgMissing;
+							char *buffiter = bufa;
+
+							//get width
+							if (CLEO_GetOperandType(thread) == DT_END) goto _ReadFormattedString_ArgMissing;
 							GetScriptParams(thread, 1);
-							sprintf(bufaiter, fmtbufa, opcodeParams[0].fParam);
+							_itoa(opcodeParams[0].dwParam, buffiter, 10);
+							while (*buffiter)
+								*fmta++ = *buffiter++;
+						}
+						else
+							*fmta++ = *iter;
+						iter++;
+					}
+
+					//get immidiate width value
+					while (isdigit(*iter))
+						*fmta++ = *iter++;
+
+					//get precision
+					if (*iter == '.')
+					{
+						*fmta++ = *iter++;
+						if (*iter == '*')
+						{
+							char *buffiter = bufa;
+							if (CLEO_GetOperandType(thread) == DT_END) goto _ReadFormattedString_ArgMissing;
+							GetScriptParams(thread, 1);
+							_itoa(opcodeParams[0].dwParam, buffiter, 10);
+							while (*buffiter)
+								*fmta++ = *buffiter++;
+						}
+						else
+							while (isdigit(*iter))
+								*fmta++ = *iter++;
+					}
+					//get size
+					if (*iter == 'h' || *iter == 'l')
+						*fmta++ = *iter++;
+
+					switch (*iter)
+					{
+					case 's':
+					{
+						static const char none[] = "(null)";
+						if (CLEO_GetOperandType(thread) == DT_END) goto _ReadFormattedString_ArgMissing;
+						const char *astr = ReadStringParam(thread);
+						const char *striter = astr ? astr : none;
+						while (*striter)
+						{
+							if (written++ >= len) goto _ReadFormattedString_OutOfMemory;
+							*outIter++ = *striter++;
+						}
+						iter++;
+						break;
+					}
+
+					case 'c':
+						if (written++ >= len) goto _ReadFormattedString_OutOfMemory;
+						if (CLEO_GetOperandType(thread) == DT_END) goto _ReadFormattedString_ArgMissing;
+						GetScriptParams(thread, 1);
+						*outIter++ = (char)opcodeParams[0].nParam;
+						iter++;
+						break;
+
+					default:
+					{
+						/* For non wc types, use system sprintf and append to wide char output */
+						/* FIXME: for unrecognised types, should ignore % when printing */
+						char *bufaiter = bufa;
+						if (*iter == 'p' || *iter == 'P')
+						{
+							if (CLEO_GetOperandType(thread) == DT_END) goto _ReadFormattedString_ArgMissing;
+							GetScriptParams(thread, 1);
+							sprintf(bufaiter, "%08X", opcodeParams[0].dwParam);
 						}
 						else
 						{
-							if (CLEO_GetOperandType(thread) == DT_END) goto ReadFormattedString_ArgMissing;
-							GetScriptParams(thread, 1);
-							sprintf(bufaiter, fmtbufa, opcodeParams[0].pParam);
+							*fmta++ = *iter;
+							*fmta = '\0';
+							if (*iter == 'a' || *iter == 'A' ||
+								*iter == 'e' || *iter == 'E' ||
+								*iter == 'f' || *iter == 'F' ||
+								*iter == 'g' || *iter == 'G')
+							{
+								if (CLEO_GetOperandType(thread) == DT_END) goto _ReadFormattedString_ArgMissing;
+								GetScriptParams(thread, 1);
+								sprintf(bufaiter, fmtbufa, opcodeParams[0].fParam);
+							}
+							else
+							{
+								if (CLEO_GetOperandType(thread) == DT_END) goto _ReadFormattedString_ArgMissing;
+								GetScriptParams(thread, 1);
+								sprintf(bufaiter, fmtbufa, opcodeParams[0].pParam);
+							}
 						}
+						while (*bufaiter)
+						{
+							if (written++ >= len) goto _ReadFormattedString_OutOfMemory;
+							*outIter++ = *bufaiter++;
+						}
+						iter++;
+						break;
 					}
-					while (*bufaiter)
-					{
-						if (written++ >= len)
-							return -1;
-						*outputStr++ = *bufaiter++;
 					}
-					iter++;
-					break;
-				}
 				}
 			}
 		}
 
 		if (written >= len)
 		{
+			_ReadFormattedString_OutOfMemory: // jump here on error
 			LOG_WARNING("Read formatted string error: Insufficient output buffer size in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
+			outputStr[len - 1] = '\0';
+			SkipUnusedParameters(thread);
 			return -1;
 		}
 
@@ -813,13 +822,14 @@ namespace CLEO {
 		}
 		SkipUnusedParameters(thread); // skip terminator too
 
-		*outputStr++ = '\0';
+		outputStr[written] = '\0';
 		return (int)written;
 
-		ReadFormattedString_ArgMissing:
+		_ReadFormattedString_ArgMissing: // jump here on error
 		thread->IncPtr(); // skip vararg terminator
 		LOG_WARNING("Read formatted string: Not enough arguments to fulfill specified format in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
 		CCustomOpcodeSystem::ErrorSuspendScript(thread);
+		outputStr[written] = '\0';
 		return (int)written;
 	}
 
