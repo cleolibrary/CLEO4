@@ -810,8 +810,8 @@ namespace CLEO {
 		{
 			_ReadFormattedString_OutOfMemory: // jump here on error
 			LOG_WARNING("Read formatted string error: Insufficient output buffer size in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
-			outputStr[len - 1] = '\0';
 			SkipUnusedParameters(thread);
+			outputStr[len - 1] = '\0';
 			return -1;
 		}
 
@@ -826,9 +826,8 @@ namespace CLEO {
 		return (int)written;
 
 		_ReadFormattedString_ArgMissing: // jump here on error
-		thread->IncPtr(); // skip vararg terminator
 		LOG_WARNING("Read formatted string: Not enough arguments to fulfill specified format in script %s", ((CCustomScript*)thread)->GetInfoStr().c_str());
-		CCustomOpcodeSystem::ErrorSuspendScript(thread);
+		thread->IncPtr(); // skip vararg terminator
 		outputStr[written] = '\0';
 		return (int)written;
 	}
