@@ -34,7 +34,7 @@ namespace CLEO
         virtual void Inject(CCodeInjector& inj);
         ~CCustomOpcodeSystem()
         {
-            //TRACE("Last opcode executed %04X at %s:%d", lastOpcode, lastScript, lastOpcodePtr);
+            TRACE("Last opcode executed %04X", lastOpcode);
         }
 
         static bool RegisterOpcode(WORD opcode, CustomOpcodeHandler callback);
