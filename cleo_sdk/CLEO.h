@@ -47,7 +47,7 @@ enum eGameVersion : int
 };
 
 // operand types
-enum eDataType : int
+enum eDataType : BYTE
 {
 	DT_END, // variable args end marker
 	DT_DWORD, // literal int 32
