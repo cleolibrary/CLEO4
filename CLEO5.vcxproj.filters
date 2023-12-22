@@ -102,6 +102,9 @@
     <ClCompile Include="source\ScmFunction.cpp">
       <Filter>source\extensions</Filter>
     </ClCompile>
+    <ClCompile Include="source\StringStorage.cpp">
+      <Filter>source\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source\stdafx.h">
@@ -166,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="source\ScmFunction.h">
       <Filter>source\extensions</Filter>
+    </ClInclude>
+    <ClInclude Include="source\StringStorage.h">
+      <Filter>source\utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

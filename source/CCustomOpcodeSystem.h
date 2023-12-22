@@ -4,6 +4,7 @@
 #include "CSoundSystem.h"
 #include <direct.h>
 #include <set>
+#include "StringStorage.h"
 
 namespace CLEO
 {
@@ -43,7 +44,7 @@ namespace CLEO
 
         static bool RegisterOpcode(WORD opcode, CustomOpcodeHandler callback);
 
-        static OpcodeResult CleoReturnGeneric(WORD opcode, CRunningScript* thread, bool returnArgs = false, DWORD returnArgCount = 0, bool strictArgCount = true);
+        OpcodeResult CleoReturnGeneric(WORD opcode, CRunningScript* thread, bool returnArgs = false, DWORD returnArgCount = 0, bool strictArgCount = true);
         static OpcodeResult ErrorSuspendScript(CRunningScript* thread); // suspend script execution forever
 
     private:
@@ -57,6 +58,7 @@ namespace CLEO
         std::set<DWORD> m_hFiles;
         std::set<HMODULE> m_hNativeLibs;
         std::set<void*> m_pAllocations;
+        StringStorage m_cleoReturnStr = StringStorage(64); // temp storage for strings returned with cleo_return_* opcodes
 
         typedef OpcodeResult(__thiscall* _OpcodeHandler)(CRunningScript* thread, WORD opcode);
 

@@ -998,14 +998,12 @@ namespace CLEO
 				else if (IsVarString(paramType))
 				{
 					auto str = ReadStringParam(thread); OPCODE_VALIDATE_STR_ARG_READ(str)
-						// TODO: put into strings storage
-						//arg->pcParam = (char*)scmFunc->stringParams.back().c_str();
+					arg->pcParam = m_cleoReturnStr.Store(str);
 				}
 				else if (IsImmString(paramType)) // those texts exists in script code, but without terminator character. Copy is necessary
 				{
 					auto str = ReadStringParam(thread); OPCODE_VALIDATE_STR_ARG_READ(str)
-						// TODO: put into strings storage
-						//arg->pcParam = (char*)scmFunc->stringParams.back().c_str();
+					arg->pcParam = m_cleoReturnStr.Store(str);
 				}
 				else
 				{
@@ -2184,7 +2182,7 @@ namespace CLEO
 			returnParamCount = declaredParamCount;
 		}
 
-		return CCustomOpcodeSystem::CleoReturnGeneric(0x0AB2, thread, true, returnParamCount);
+		return GetInstance().OpcodeSystem.CleoReturnGeneric(0x0AB2, thread, true, returnParamCount);
 	}
 
 	//0AB3=2,var %1d% = %2d%
@@ -3058,7 +3056,7 @@ namespace CLEO
 		argCount--;
 		SetScriptCondResult(thread, result != 0);
 
-		return CCustomOpcodeSystem::CleoReturnGeneric(0x2002, thread, true, argCount);
+		return GetInstance().OpcodeSystem.CleoReturnGeneric(0x2002, thread, true, argCount);
 	}
 
 	//2003=-1, cleo_return_fail
@@ -3072,7 +3070,7 @@ namespace CLEO
 		}
 
 		SetScriptCondResult(thread, false);
-		return CCustomOpcodeSystem::CleoReturnGeneric(0x2003, thread);
+		return GetInstance().OpcodeSystem.CleoReturnGeneric(0x2003, thread);
 	}
 }
 
