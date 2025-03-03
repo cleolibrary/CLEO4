@@ -841,79 +841,98 @@ namespace CLEO
         RestoreScriptTextures();
     }
 
-    void CScriptEngine::Inject(CCodeInjector& inj)
+    void CScriptEngine::Inject(CCodeInjector& inj, bool latePhase)
     {
-        TRACE("Injecting ScriptEngine...");
         CGameVersionManager& gvm = CleoInstance.VersionManager;
 
-        // Global Events crashfix
-        //inj.MemoryWrite(0xA9AF6C, 0, 4);
+        if (latePhase == false)
+        {
+            TRACE("Injecting ScriptEngine...");
 
-        // Dirty hacks to keep compatibility with plugins + overcome VS thiscall restrictions
-        FUNC_AddScriptToQueue = gvm.TranslateMemoryAddress(MA_ADD_SCRIPT_TO_QUEUE_FUNCTION);
-        FUNC_RemoveScriptFromQueue = gvm.TranslateMemoryAddress(MA_REMOVE_SCRIPT_FROM_QUEUE_FUNCTION);
-        FUNC_StopScript = gvm.TranslateMemoryAddress(MA_STOP_SCRIPT_FUNCTION);
-        FUNC_ScriptOpcodeHandler00 = gvm.TranslateMemoryAddress(MA_SCRIPT_OPCODE_HANDLER0_FUNCTION);
-        FUNC_GetScriptParams = gvm.TranslateMemoryAddress(MA_GET_SCRIPT_PARAMS_FUNCTION);
-        FUNC_TransmitScriptParams = gvm.TranslateMemoryAddress(MA_TRANSMIT_SCRIPT_PARAMS_FUNCTION);
-        FUNC_SetScriptParams = gvm.TranslateMemoryAddress(MA_SET_SCRIPT_PARAMS_FUNCTION);
-        FUNC_SetScriptCondResult = gvm.TranslateMemoryAddress(MA_SET_SCRIPT_COND_RESULT_FUNCTION);
-        FUNC_GetScriptParamPointer1 = gvm.TranslateMemoryAddress(MA_GET_SCRIPT_PARAM_POINTER1_FUNCTION);
-        FUNC_GetScriptParamPointer2 = gvm.TranslateMemoryAddress(MA_GET_SCRIPT_PARAM_POINTER2_FUNCTION);
+            // Global Events crashfix
+            //inj.MemoryWrite(0xA9AF6C, 0, 4);
 
-        AddScriptToQueue = reinterpret_cast<void(__thiscall*)(CRunningScript*, CRunningScript**)>(_AddScriptToQueue);
-        RemoveScriptFromQueue = reinterpret_cast<void(__thiscall*)(CRunningScript*, CRunningScript**)>(_RemoveScriptFromQueue);
-        StopScript = reinterpret_cast<void(__thiscall*)(CRunningScript*)>(_StopScript);
-        ScriptOpcodeHandler00 = reinterpret_cast<char(__thiscall*)(CRunningScript*, WORD)>(_ScriptOpcodeHandler00);
-        GetScriptParams = reinterpret_cast<void(__thiscall*)(CRunningScript*, int)>(_GetScriptParams);
-        TransmitScriptParams = reinterpret_cast<void(__thiscall*)(CRunningScript*, CRunningScript*)>(_TransmitScriptParams);
-        SetScriptParams = reinterpret_cast<void(__thiscall*)(CRunningScript*, int)>(_SetScriptParams);
-        SetScriptCondResult = reinterpret_cast<void(__thiscall*)(CRunningScript*, bool)>(_SetScriptCondResult);
-        GetScriptParamPointer1 = reinterpret_cast<SCRIPT_VAR * (__thiscall*)(CRunningScript*)>(_GetScriptParamPointer1);
-        GetScriptParamPointer2 = reinterpret_cast<SCRIPT_VAR * (__thiscall*)(CRunningScript*, int)>(_GetScriptParamPointer2);
+            // Dirty hacks to keep compatibility with plugins + overcome VS thiscall restrictions
+            FUNC_AddScriptToQueue = gvm.TranslateMemoryAddress(MA_ADD_SCRIPT_TO_QUEUE_FUNCTION);
+            FUNC_RemoveScriptFromQueue = gvm.TranslateMemoryAddress(MA_REMOVE_SCRIPT_FROM_QUEUE_FUNCTION);
+            FUNC_StopScript = gvm.TranslateMemoryAddress(MA_STOP_SCRIPT_FUNCTION);
+            FUNC_ScriptOpcodeHandler00 = gvm.TranslateMemoryAddress(MA_SCRIPT_OPCODE_HANDLER0_FUNCTION);
+            FUNC_GetScriptParams = gvm.TranslateMemoryAddress(MA_GET_SCRIPT_PARAMS_FUNCTION);
+            FUNC_TransmitScriptParams = gvm.TranslateMemoryAddress(MA_TRANSMIT_SCRIPT_PARAMS_FUNCTION);
+            FUNC_SetScriptParams = gvm.TranslateMemoryAddress(MA_SET_SCRIPT_PARAMS_FUNCTION);
+            FUNC_SetScriptCondResult = gvm.TranslateMemoryAddress(MA_SET_SCRIPT_COND_RESULT_FUNCTION);
+            FUNC_GetScriptParamPointer1 = gvm.TranslateMemoryAddress(MA_GET_SCRIPT_PARAM_POINTER1_FUNCTION);
+            FUNC_GetScriptParamPointer2 = gvm.TranslateMemoryAddress(MA_GET_SCRIPT_PARAM_POINTER2_FUNCTION);
 
-        SaveScmData = gvm.TranslateMemoryAddress(MA_SAVE_SCM_DATA_FUNCTION);
-        LoadScmData = gvm.TranslateMemoryAddress(MA_LOAD_SCM_DATA_FUNCTION);
+            AddScriptToQueue = reinterpret_cast<void(__thiscall*)(CRunningScript*, CRunningScript**)>(_AddScriptToQueue);
+            RemoveScriptFromQueue = reinterpret_cast<void(__thiscall*)(CRunningScript*, CRunningScript**)>(_RemoveScriptFromQueue);
+            StopScript = reinterpret_cast<void(__thiscall*)(CRunningScript*)>(_StopScript);
+            ScriptOpcodeHandler00 = reinterpret_cast<char(__thiscall*)(CRunningScript*, WORD)>(_ScriptOpcodeHandler00);
+            GetScriptParams = reinterpret_cast<void(__thiscall*)(CRunningScript*, int)>(_GetScriptParams);
+            TransmitScriptParams = reinterpret_cast<void(__thiscall*)(CRunningScript*, CRunningScript*)>(_TransmitScriptParams);
+            SetScriptParams = reinterpret_cast<void(__thiscall*)(CRunningScript*, int)>(_SetScriptParams);
+            SetScriptCondResult = reinterpret_cast<void(__thiscall*)(CRunningScript*, bool)>(_SetScriptCondResult);
+            GetScriptParamPointer1 = reinterpret_cast<SCRIPT_VAR * (__thiscall*)(CRunningScript*)>(_GetScriptParamPointer1);
+            GetScriptParamPointer2 = reinterpret_cast<SCRIPT_VAR * (__thiscall*)(CRunningScript*, int)>(_GetScriptParamPointer2);
 
-        GameTimer = gvm.TranslateMemoryAddress(MA_GAME_TIMER);
-        opcodeParams = gvm.TranslateMemoryAddress(MA_OPCODE_PARAMS);
-        missionLocals = gvm.TranslateMemoryAddress(MA_MISSION_LOCALS);
-        scmBlock = gvm.TranslateMemoryAddress(MA_SCM_BLOCK);
-        MissionLoaded = gvm.TranslateMemoryAddress(MA_MISSION_LOADED);
-        missionBlock = gvm.TranslateMemoryAddress(MA_MISSION_BLOCK);
-        onMissionFlag = gvm.TranslateMemoryAddress(MA_ON_MISSION_FLAG);
+            SaveScmData = gvm.TranslateMemoryAddress(MA_SAVE_SCM_DATA_FUNCTION);
+            LoadScmData = gvm.TranslateMemoryAddress(MA_LOAD_SCM_DATA_FUNCTION);
 
-        // Protect script dependencies
-        auto addr = gvm.TranslateMemoryAddress(MA_CALL_PROCESS_SCRIPT);
-        inj.MemoryReadOffset(addr.address + 1, ProcessScript);
-        inj.ReplaceFunction(HOOK_ProcessScript, addr);
+            GameTimer = gvm.TranslateMemoryAddress(MA_GAME_TIMER);
+            opcodeParams = gvm.TranslateMemoryAddress(MA_OPCODE_PARAMS);
+            missionLocals = gvm.TranslateMemoryAddress(MA_MISSION_LOCALS);
+            scmBlock = gvm.TranslateMemoryAddress(MA_SCM_BLOCK);
+            MissionLoaded = gvm.TranslateMemoryAddress(MA_MISSION_LOADED);
+            missionBlock = gvm.TranslateMemoryAddress(MA_MISSION_BLOCK);
+            onMissionFlag = gvm.TranslateMemoryAddress(MA_ON_MISSION_FLAG);
 
-        inj.InjectFunction(GetScriptStringParam, gvm.TranslateMemoryAddress(MA_GET_SCRIPT_STRING_PARAM_FUNCTION));
-        // setup ScrLog plugin to not patch it again
-        auto scrLogConfig = FS::absolute("scrlog.ini");
-        if (FS::is_regular_file(scrLogConfig)) WritePrivateProfileString("CONFIG", "HOOK_COLLECT_STRING", "FALSE", scrLogConfig.string().c_str());
-        scrLogConfig = FS::absolute("scripts\\scrlog.ini");
-        if (FS::is_regular_file(scrLogConfig)) WritePrivateProfileString("CONFIG", "HOOK_COLLECT_STRING", "FALSE", scrLogConfig.string().c_str());
+            // Protect script dependencies
+            auto addr = gvm.TranslateMemoryAddress(MA_CALL_PROCESS_SCRIPT);
+            inj.MemoryReadOffset(addr.address + 1, ProcessScript);
+            inj.ReplaceFunction(HOOK_ProcessScript, addr);
 
-        scriptSprites = gvm.TranslateMemoryAddress(MA_SCRIPT_SPRITE_ARRAY);
-        scriptDraws = gvm.TranslateMemoryAddress(MA_SCRIPT_DRAW_ARRAY);
-        scriptTexts = gvm.TranslateMemoryAddress(MA_SCRIPT_TEXT_ARRAY);
-        numScriptDraws = gvm.TranslateMemoryAddress(MA_NUM_SCRIPT_DRAWS);
-        numScriptTexts = gvm.TranslateMemoryAddress(MA_NUM_SCRIPT_TEXTS);
-        useTextCommands = gvm.TranslateMemoryAddress(MA_USE_TEXT_COMMANDS);
+            inj.InjectFunction(GetScriptStringParam, gvm.TranslateMemoryAddress(MA_GET_SCRIPT_STRING_PARAM_FUNCTION));
 
-        inj.MemoryReadOffset(gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_AFTER_FADE).address + 1, CLEO::DrawScriptStuff);
-        inj.MemoryReadOffset(gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_BEFORE_FADE).address + 1, DrawScriptStuff_H);
-        inj.ReplaceFunction(HOOK_DrawScriptStuff, gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_AFTER_FADE));
-        inj.ReplaceFunction(HOOK_DrawScriptStuff, gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_BEFORE_FADE));
-        inj.MemoryWrite(gvm.TranslateMemoryAddress(MA_CODE_JUMP_FOR_TXD_STORE), OP_RET);
+            scriptSprites = gvm.TranslateMemoryAddress(MA_SCRIPT_SPRITE_ARRAY);
+            scriptDraws = gvm.TranslateMemoryAddress(MA_SCRIPT_DRAW_ARRAY);
+            scriptTexts = gvm.TranslateMemoryAddress(MA_SCRIPT_TEXT_ARRAY);
+            numScriptDraws = gvm.TranslateMemoryAddress(MA_NUM_SCRIPT_DRAWS);
+            numScriptTexts = gvm.TranslateMemoryAddress(MA_NUM_SCRIPT_TEXTS);
+            useTextCommands = gvm.TranslateMemoryAddress(MA_USE_TEXT_COMMANDS);
 
-        inactiveThreadQueue = gvm.TranslateMemoryAddress(MA_INACTIVE_THREAD_QUEUE);
-        activeThreadQueue = gvm.TranslateMemoryAddress(MA_ACTIVE_THREAD_QUEUE);
-        staticThreads = gvm.TranslateMemoryAddress(MA_STATIC_THREADS);
+            inj.MemoryReadOffset(gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_AFTER_FADE).address + 1, CLEO::DrawScriptStuff);
+            inj.MemoryReadOffset(gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_BEFORE_FADE).address + 1, DrawScriptStuff_H);
+            inj.ReplaceFunction(HOOK_DrawScriptStuff, gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_AFTER_FADE));
+            inj.ReplaceFunction(HOOK_DrawScriptStuff, gvm.TranslateMemoryAddress(MA_CALL_DRAW_SCRIPT_TEXTS_BEFORE_FADE));
+            inj.MemoryWrite(gvm.TranslateMemoryAddress(MA_CODE_JUMP_FOR_TXD_STORE), OP_RET);
 
-        inj.ReplaceFunction(OnLoadScmData, gvm.TranslateMemoryAddress(MA_CALL_LOAD_SCM_DATA));
-        inj.ReplaceFunction(OnSaveScmData, gvm.TranslateMemoryAddress(MA_CALL_SAVE_SCM_DATA));
+            inactiveThreadQueue = gvm.TranslateMemoryAddress(MA_INACTIVE_THREAD_QUEUE);
+            activeThreadQueue = gvm.TranslateMemoryAddress(MA_ACTIVE_THREAD_QUEUE);
+            staticThreads = gvm.TranslateMemoryAddress(MA_STATIC_THREADS);
+
+            inj.ReplaceFunction(OnLoadScmData, gvm.TranslateMemoryAddress(MA_CALL_LOAD_SCM_DATA));
+            inj.ReplaceFunction(OnSaveScmData, gvm.TranslateMemoryAddress(MA_CALL_SAVE_SCM_DATA));
+        }
+        else // late injection
+        {
+            TRACE("Injecting ScriptEngine (phase 2)");
+
+            // path GetScriptStringParam again if somebody edited it meanwhile (like scrlog.asi)
+            inj.InjectFunction(GetScriptStringParam, gvm.TranslateMemoryAddress(MA_GET_SCRIPT_STRING_PARAM_FUNCTION));
+
+            // setup ScrLog plugin to not patch GetScriptStringParam again
+            auto hScrLog = GetModuleHandle("scrlog.asi");
+            if (hScrLog != 0)
+            {
+                auto path = std::string(MAX_PATH, '\0');
+                if (GetModuleFileName(hScrLog, path.data(), path.size()) != FALSE)
+                {
+                    path = FilepathGetParent(path);
+                    path += "\\scrlog.ini";
+                    WritePrivateProfileString("CONFIG", "HOOK_COLLECT_STRING", "FALSE", path.c_str());
+                }
+            }
+        }
     }
 
     CScriptEngine::~CScriptEngine()
