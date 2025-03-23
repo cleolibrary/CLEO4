@@ -1519,8 +1519,9 @@ namespace CLEO
             else
             {
                 // store script file directory and name
-                FS::path path = szFileName;
-                path = FS::weakly_canonical(path);
+                std::string pathStr = szFileName;
+                FilepathNormalize(pathStr, false);
+                FS::path path = FS::weakly_canonical(pathStr);
 
                 // file exists?
                 if (!FS::is_regular_file(path))
