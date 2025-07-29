@@ -27,6 +27,37 @@
     <ClCompile Include="..\..\third-party\plugin-sdk\shared\Patch.cpp">
       <Filter>plugin_sdk</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\source\OpcodeInfoDatabase.cpp">
+      <Filter>cleo</Filter>
+    </ClCompile>
+    <ClCompile Include="ScriptLog.cpp" />
+    <ClCompile Include="..\..\third-party\simdjson\simdjson.cpp">
+      <Filter>cleo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third-party\plugin-sdk\plugin_sa\game_sa\CTheScripts.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third-party\plugin-sdk\plugin_sa\game_sa\CMenuManager.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third-party\plugin-sdk\plugin_sa\game_sa\CSprite2d.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third-party\plugin-sdk\plugin_sa\game_sa\CGame.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third-party\plugin-sdk\plugin_sa\game_sa\CCheat.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third-party\plugin-sdk\plugin_sa\game_sa\CHud.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\source\crc32.cpp">
+      <Filter>cleo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third-party\plugin-sdk\plugin_sa\game_sa\CRunningScript.cpp">
+      <Filter>plugin_sdk</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ScreenLog.h" />
@@ -37,6 +68,9 @@
       <Filter>cleo_sdk</Filter>
     </ClInclude>
     <ClInclude Include="ScriptLog.h" />
+    <ClInclude Include="..\..\source\OpcodeInfoDatabase.h">
+      <Filter>cleo</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="plugin_sdk">
@@ -44,6 +78,9 @@
     </Filter>
     <Filter Include="cleo_sdk">
       <UniqueIdentifier>{7293454f-2941-4f6c-b0d3-b52d27a88286}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="cleo">
+      <UniqueIdentifier>{f527128d-5d4d-487f-83d3-928f3a163800}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

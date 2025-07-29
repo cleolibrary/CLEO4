@@ -15,7 +15,7 @@ namespace CLEO
         auto paramType = thread->PeekDataType();
         auto arrayType = thread->PeekArrayType();
         auto isVariableInt =
-            IsVariable(paramType) && (arrayType == eArrayDataType::ADT_NONE || arrayType == eArrayDataType::ADT_INT);
+            IsVariable(paramType) && (arrayType == eArrayType::AT_NONE || arrayType == eArrayType::AT_INT);
 
         // integer address to text buffer
         if (IsImmInteger(paramType) || isVariableInt)

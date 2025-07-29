@@ -108,6 +108,7 @@ jobs:
 
           @echo Download Sanny Builder Library json
           curl https://raw.githubusercontent.com/sannybuilder/library/master/sa/sa.json -o .output\Release\cleo\.config\sa.json
+          curl https://raw.githubusercontent.com/sannybuilder/library/master/sa/enums.json -o .output\Release\cleo\.config\enums.json
 
           @echo Copy SDK
           copy .output\Release\CLEO.lib cleo_sdk\CLEO.lib

@@ -1,4 +1,5 @@
 ## 5.2.0
+- added script execution log feature. See **cleo\\.cleo_script_log.xml** after game crash or typing **CLOG** cheat code
 - added check for preceding **gosub** call in **0AA1 ([return_if_false](https://library.sannybuilder.com/#/sa/script/extensions/CLEO/0AA1))**
 - added limit for memory allocated per script (see `cleo_plugins\SA.MemoryOperations.ini`). Exceeding the limit will cause a warning in game
 - added listing of remaining memory blocks allocated by scripts to the cleo.log when closing or starting new game

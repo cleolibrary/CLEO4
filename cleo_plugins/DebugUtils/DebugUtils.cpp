@@ -28,7 +28,7 @@ class DebugUtils
     };
     static std::deque<PausedScriptInfo> pausedScripts;
 
-    static ScriptLog currScript;
+    static ScriptLog scriptLog;
 
     // limits for processing after which script is considered hanging
     static size_t configLimitCommand;
@@ -68,7 +68,7 @@ class DebugUtils
         CLEO_RegisterCallback(eCallbackId::GameBegin, OnGameBegin);
         CLEO_RegisterCallback(eCallbackId::Log, OnLog);
         CLEO_RegisterCallback(eCallbackId::DrawingFinished, OnDrawingFinished);
-        CLEO_RegisterCallback(eCallbackId::ScriptProcessBefore, OnScriptProcess);
+        CLEO_RegisterCallback(eCallbackId::ScriptProcessBefore, OnScriptProcessBefore);
         CLEO_RegisterCallback(eCallbackId::ScriptOpcodeProcessBefore, OnScriptOpcodeProcessBefore);
         CLEO_RegisterCallback(eCallbackId::ScriptsFinalize, OnScriptsFinalize);
     }
@@ -78,7 +78,7 @@ class DebugUtils
         CLEO_UnregisterCallback(eCallbackId::GameBegin, OnGameBegin);
         CLEO_UnregisterCallback(eCallbackId::Log, OnLog);
         CLEO_UnregisterCallback(eCallbackId::DrawingFinished, OnDrawingFinished);
-        CLEO_UnregisterCallback(eCallbackId::ScriptProcessBefore, OnScriptProcess);
+        CLEO_UnregisterCallback(eCallbackId::ScriptProcessBefore, OnScriptProcessBefore);
         CLEO_UnregisterCallback(eCallbackId::ScriptOpcodeProcessBefore, OnScriptOpcodeProcessBefore);
         CLEO_UnregisterCallback(eCallbackId::ScriptsFinalize, OnScriptsFinalize);
     }
@@ -173,19 +173,13 @@ class DebugUtils
                 }
             }
         }
-
-        // this should be called at end of scripts processing
-        // but PluginSDK, SAMP etc. call single scripts/callbacks outside of the processing queue
-        currScript.Clear(); // make sure current script log does not persists to next render frame
     }
 
-    static bool WINAPI OnScriptProcess(CRunningScript* thread)
+    static bool WINAPI OnScriptProcessBefore(CRunningScript* thread)
     {
-        currScript.Begin(thread);
-
-        for (size_t i = 0; i < pausedScripts.size(); i++)
+        for (const auto& s : pausedScripts)
         {
-            if (pausedScripts[i].ptr == thread)
+            if (s.ptr == thread)
             {
                 return false; // script paused, do not process
             }
@@ -196,10 +190,8 @@ class DebugUtils
 
     static OpcodeResult WINAPI OnScriptOpcodeProcessBefore(CRunningScript* thread, DWORD opcode)
     {
-        currScript.ProcessCommand(thread);
-
         // script per render frame commands limit
-        if (configLimitCommand > 0 && currScript.commandCounter > configLimitCommand)
+        if (configLimitCommand > 0 && scriptLog.CurrScriptCommandCount() > configLimitCommand)
         {
             // add comma separators into huge numbers
             std::string limitStr;
@@ -221,9 +213,9 @@ class DebugUtils
         }
 
         // script per frame time execution limit
-        if (currScript.commandCounter % 1000 == 0) // check once every 1000 commands
+        if (scriptLog.CurrScriptCommandCount() % 1000 == 0) // check once every 1000 commands
         {
-            if (configLimitTime > 0 && currScript.GetElapsedSeconds() > configLimitTime)
+            if (configLimitTime > 0 && scriptLog.CurrScriptElapsedSeconds() > configLimitTime)
             {
                 SHOW_ERROR(
                     "Over %d seconds of lag in a single frame by script %s \nTo prevent the game from freezing, CLEO "
@@ -440,7 +432,7 @@ class DebugUtils
 
 ScreenLog DebugUtils::screenLog = {};
 std::deque<DebugUtils::PausedScriptInfo> DebugUtils::pausedScripts;
-ScriptLog DebugUtils::currScript = {};
+ScriptLog DebugUtils::scriptLog = {};
 size_t DebugUtils::configLimitCommand;
 size_t DebugUtils::configLimitTime;
 bool DebugUtils::keysReleased = true;

@@ -182,6 +182,9 @@
     <ClInclude Include="source\ScmFunction.h">
       <Filter>source\extensions</Filter>
     </ClInclude>
+    <ClInclude Include="source\ScriptUtils.h">
+      <Filter>source\utils</Filter>
+    </ClInclude>
     <ClInclude Include="cleo_sdk\CLEO_Utils.h">
       <Filter>cleo_sdk</Filter>
     </ClInclude>

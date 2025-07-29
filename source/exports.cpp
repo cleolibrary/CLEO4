@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "CleoBase.h"
+#include "ScmFunction.h"
 
 namespace CLEO
 {
@@ -158,6 +159,12 @@ namespace CLEO
         {
             auto cs = (CCustomScript*)thread;
             cs->SetWorkDir(path);
+        }
+
+        DWORD WINAPI CLEO_GetCleoCallStackSize(CRunningScript* thread)
+        {
+            ScmFunction* scmFunc = ScmFunction::Get(thread->GetScmFunction());
+            return scmFunc ? 1 + scmFunc->GetCallStackSize() : 0;
         }
 
         void WINAPI CLEO_SetThreadCondResult(CLEO::CRunningScript* thread, BOOL result)

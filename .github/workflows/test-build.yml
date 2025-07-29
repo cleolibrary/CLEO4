@@ -96,12 +96,17 @@ jobs:
         run: |
           @echo Create directories
           mkdir .output\Release\cleo
+          mkdir .output\Release\cleo\.config
           mkdir .output\Release\cleo\cleo_plugins
 
           @echo Copy files
           copy source\cleo_config.ini .output\Release\cleo\.cleo_config.ini
           copy cleo_plugins\.output\*.cleo .output\Release\cleo\cleo_plugins
           copy cleo_plugins\.output\*.ini .output\Release\cleo\cleo_plugins
+          
+          @echo Download Sanny Builder Library json
+          curl https://raw.githubusercontent.com/sannybuilder/library/master/sa/sa.json -o .output\Release\cleo\.config\sa.json
+          curl https://raw.githubusercontent.com/sannybuilder/library/master/sa/enums.json -o .output\Release\cleo\.config\enums.json
 
       - name: Upload Result
         id: upload

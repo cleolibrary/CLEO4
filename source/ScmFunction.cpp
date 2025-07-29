@@ -79,6 +79,13 @@ namespace CLEO
         cs->SetScmFunction(thisScmFunctionId = (unsigned short)allocationPlace);
     }
 
+    size_t ScmFunction::GetCallStackSize() const
+    {
+        if (prevScmFunctionId == 0) return 0;
+        auto parent = Get(prevScmFunctionId);
+        return parent ? parent->GetCallStackSize() + 1 : 1;
+    }
+
     void ScmFunction::Return(CRunningScript* thread)
     {
         auto cs = reinterpret_cast<CCustomScript*>(thread);

@@ -108,7 +108,112 @@ namespace CLEO
         std::vsnprintf(result.data(), result.length() + 1, format, args);
         va_end(args);
 
-        return result;
+        return std::move(result);
+    }
+
+    static void StringAppendPrintf(std::string& dest, const char* format, ...)
+    {
+        va_list args;
+
+        va_start(args, format);
+        auto len = std::vsnprintf(nullptr, 0, format, args);
+        va_end(args);
+
+        if (len <= 0) return; // empty or encoding error
+
+        size_t oriSize = dest.size();
+        dest.resize(dest.size() + len);
+
+        va_start(args, format);
+        std::vsnprintf(dest.data() + oriSize, len + 1, format, args);
+        va_end(args);
+    }
+
+    static void StringAppendNum(std::string& dest, int number, int padLen = 0)
+    {
+        static char buff[16];
+
+        if (number < 0)
+        {
+            dest.push_back('-');
+            padLen--;
+            number = -number;
+        }
+
+        int i = 0;
+        do
+        {
+            buff[i] = '0' + (number % 10);
+            number /= 10;
+            i++;
+            padLen--;
+        } while (number != 0 || padLen > 0);
+
+        dest.reserve(dest.length() + i);
+        while (i > 0)
+        {
+            i--;
+            dest.push_back(buff[i]);
+        }
+    }
+
+    static void StringAppendHex(std::string& dest, DWORD number, int padLen = 0)
+    {
+        static const char digits[] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+        static char buff[16];
+
+        int i = 0;
+        do
+        {
+            buff[i] = digits[number & 0xF];
+            number >>= 4; // 4 bits peer hex digit
+            i++;
+            padLen--;
+        } while (number != 0 || padLen > 0);
+
+        dest.reserve(dest.length() + i);
+        while (i > 0)
+        {
+            i--;
+            dest.push_back(buff[i]);
+        }
+    }
+
+    static void StringAppendFloat(std::string& dest, float number, int padLen = 0)
+    {
+        static char buff[32];
+
+        int len = sprintf_s(buff, "%f", number);
+
+        // cut trailing zeros
+        if (len > 2)
+        {
+            int posNonZero = -1;
+            for (auto i = len - 1; i >= 0; i--)
+            {
+                if (buff[i] == '.')
+                {
+                    if (posNonZero != -1)
+                        len = posNonZero;
+                    else
+                        len = i + 1; // keep one zero after decimal point
+                    len++;           // index to length
+                    buff[len] = '\0';
+                    break;
+                }
+
+                if (posNonZero == -1 && buff[i] != '0') posNonZero = i;
+            }
+        }
+
+        padLen -= len;
+        while (padLen > 0)
+        {
+            dest += ' ';
+            padLen--;
+        }
+
+        dest += buff;
     }
 
     static bool StringStartsWith(const std::string_view str, const std::string_view prefix, bool caseSensitive = true)
@@ -211,6 +316,31 @@ namespace CLEO
         std::transform(str.begin(), str.end(), str.begin(), [](unsigned char c) { return tolower(c); });
     }
 
+    // remove white characters from left hand side of the string
+    static void StringTrimLeft(std::string& str)
+    {
+        auto it = std::find_if(str.begin(), str.end(), [](char c) {
+            return c != ' ' && c != '\t' && c != '\v' && c != '\r' && c != '\n' && c != '\f';
+        });
+        str.erase(str.begin(), it);
+    }
+
+    // remove white characters from right hand side of the string
+    static void StringTrimRight(std::string& str)
+    {
+        auto it = std::find_if(str.rbegin(), str.rend(), [](char c) {
+            return c != ' ' && c != '\t' && c != '\v' && c != '\r' && c != '\n' && c != '\f';
+        });
+        str.erase(it.base(), str.end());
+    }
+
+    // remove white characters at each end of the string
+    static void StringTrim(std::string& str)
+    {
+        StringTrimRight(str);
+        StringTrimLeft(str);
+    }
+
     static std::string ScriptInfoStr(CLEO::CRunningScript* thread)
     {
         std::string info(1024, '\0');
@@ -256,8 +386,7 @@ namespace CLEO
             }
 
             path.replace(
-                parentPos, (refPos - parentPos) + ParentRefLen - 1,
-                ""
+                parentPos, (refPos - parentPos) + ParentRefLen - 1, ""
             ); // remove parent dir along with following \\..
 
             refPos = path.find(ParentRef); // find next
@@ -492,13 +621,15 @@ namespace CLEO
 
         MemPatch(void* src, size_t size) : address(src), buffer(size) { memcpy(buffer.data(), src, size); }
 
-        void Apply()
+        inline void Apply() const
         {
             if (!buffer.empty())
             {
                 memcpy(address, buffer.data(), buffer.size());
             }
         }
+
+        inline void* GetAddress() const { return address; }
     };
 
     static MemPatch MemPatchJump(size_t position, void* jumpTarget)
@@ -580,9 +711,9 @@ namespace CLEO
 #define OPCODE_CONDITION_RESULT(value) CLEO_SetThreadCondResult(thread, value);
 
     // opcode param handling utils internal
-    static SCRIPT_VAR* _paramsArray           = nullptr;
-    static eDataType _lastParamType           = eDataType::DT_END;
-    static eArrayDataType _lastParamArrayType = eArrayDataType::ADT_NONE;
+    static SCRIPT_VAR* _paramsArray       = nullptr;
+    static eDataType _lastParamType       = eDataType::DT_END;
+    static eArrayType _lastParamArrayType = eArrayType::AT_NONE;
 
     static SCRIPT_VAR& _readParam(CRunningScript* thread)
     {
@@ -604,7 +735,7 @@ namespace CLEO
         {
             // pretend it was float type
             if (IsImmInteger(_lastParamType)) _lastParamType = eDataType::DT_FLOAT;
-            if (_lastParamArrayType == eArrayDataType::ADT_INT) _lastParamArrayType = eArrayDataType::ADT_FLOAT;
+            if (_lastParamArrayType == eArrayType::AT_INT) _lastParamArrayType = eArrayType::AT_FLOAT;
         }
 
         return var;
@@ -651,7 +782,7 @@ namespace CLEO
 
     static inline bool _paramWasInt(bool output = false)
     {
-        if (_lastParamArrayType != eArrayDataType::ADT_NONE) return _lastParamArrayType == eArrayDataType::ADT_INT;
+        if (_lastParamArrayType != eArrayType::AT_NONE) return _lastParamArrayType == eArrayType::AT_INT;
         if (IsVariable(_lastParamType)) return true;
         if (!output && IsImmInteger(_lastParamType)) return true;
         return false;
@@ -659,7 +790,7 @@ namespace CLEO
 
     static inline bool _paramWasFloat(bool output = false)
     {
-        if (_lastParamArrayType != eArrayDataType::ADT_NONE) return _lastParamArrayType == eArrayDataType::ADT_FLOAT;
+        if (_lastParamArrayType != eArrayType::AT_NONE) return _lastParamArrayType == eArrayType::AT_FLOAT;
         if (IsVariable(_lastParamType)) return true;
         if (!output && IsImmFloat(_lastParamType)) return true;
         return false;
@@ -667,11 +798,10 @@ namespace CLEO
 
     static inline bool _paramWasString(bool output = false)
     {
-        if (_lastParamArrayType != eArrayDataType::ADT_NONE)
+        if (_lastParamArrayType != eArrayType::AT_NONE)
         {
-            return _lastParamArrayType == eArrayDataType::ADT_STRING ||
-                   _lastParamArrayType == eArrayDataType::ADT_TEXTLABEL ||
-                   _lastParamArrayType == eArrayDataType::ADT_INT; // pointer to output buffer
+            return _lastParamArrayType == eArrayType::AT_STRING || _lastParamArrayType == eArrayType::AT_TEXTLABEL ||
+                   _lastParamArrayType == eArrayType::AT_INT; // pointer to output buffer
         }
 
         if (IsVarString(_lastParamType)) return true;
@@ -706,14 +836,13 @@ namespace CLEO
         }
 
         auto str = CLEO_ReadStringPointerOpcodeParam(
-            thread, buffer,
-            bufferSize
+            thread, buffer, bufferSize
         ); // returns pointer to source data whenever possible
 
         if (str == nullptr) // reading string failed
         {
-            auto isVariableInt = IsVariable(_lastParamType) && (_lastParamArrayType == eArrayDataType::ADT_NONE ||
-                                                                _lastParamArrayType == eArrayDataType::ADT_INT);
+            auto isVariableInt = IsVariable(_lastParamType) && (_lastParamArrayType == eArrayType::AT_NONE ||
+                                                                _lastParamArrayType == eArrayType::AT_INT);
             if ((IsImmInteger(_lastParamType) || isVariableInt) && // pointer argument type?
                 CLEO_GetOpcodeParamsArray()->dwParam <= MinValidAddress)
             {
