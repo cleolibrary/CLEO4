@@ -91,9 +91,9 @@ namespace CLEO
         return CLEO_GetScriptVersion(script) < CLEO_VER_5;
     }
 
-    static bool IsStrictValidation(CLEO::CRunningScript* script)
+    static bool IsStrictValidation(CLEO::CRunningScript* script = nullptr)
     {
-        return (CLEO_GetConfigInt("StrictValidation", 0) == 1) && !IsLegacyScript(script);
+        return (CLEO_GetConfigInt("StrictValidation", 0) == 1) && (!script || !IsLegacyScript(script));
     }
 
     static std::string StringPrintfV(const char* format, va_list args)

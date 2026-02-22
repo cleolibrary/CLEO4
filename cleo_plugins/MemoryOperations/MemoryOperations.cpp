@@ -12,6 +12,9 @@ class MemoryOperations
 {
   public:
     std::unordered_map<void*, size_t> m_allocations;
+    static constexpr DWORD Alloc_End_Marker =
+        0xAD840A39; // added at end of allocated memory blocks, validated during deallocation
+
     std::unordered_map<HMODULE, size_t> m_libraries;
 
     // keep track of per-script memory allocations
@@ -98,8 +101,19 @@ class MemoryOperations
                 float(entry.second.size) / 1024, str.c_str()
             );
         }
-        for (auto p : Instance.m_allocations)
-            free(p.first);
+        for (auto [address, size] : Instance.m_allocations)
+        {
+            if (!Instance.ValidateMemoryAllocation(nullptr, address))
+            {
+                SHOW_ERROR(
+                    "Memory corruption detected!\n\nAt some point an out-of-bounds write was performed on memory "
+                    "obtained via ALLOCATE_MEMORY command.\nAffected block is at 0x%X, allocated size %d.",
+                    address, size
+                );
+                continue; // keep allocated
+            }
+            free(address);
+        }
         Instance.m_allocations.clear();
         Instance.m_scriptAllocationsInfo.clear();
 
@@ -141,6 +155,14 @@ class MemoryOperations
         info.count--;
         info.size -= m_allocations[address];
         m_allocations.erase(address);
+    }
+
+    bool ValidateMemoryAllocation(CLEO::CRunningScript* thread, void* address)
+    {
+        if (IsStrictValidation(thread))
+            return !memcmp((BYTE*)address + m_allocations.at(address), &Alloc_End_Marker, sizeof(Alloc_End_Marker));
+        else
+            return true;
     }
 
     // opcodes 0AA5 - 0AA8
@@ -693,11 +715,12 @@ class MemoryOperations
         }
 
         // perform
-        void* mem = calloc(size, 1);
+        void* mem = calloc(size + sizeof(Alloc_End_Marker), 1);
         if (mem)
         {
             DWORD oldProtect;
             VirtualProtect(mem, size, PAGE_EXECUTE_READWRITE, &oldProtect);
+            memcpy((BYTE*)mem + size, &Alloc_End_Marker, sizeof(Alloc_End_Marker));
 
             Instance.RegisterMemoryAllocation(thread, mem, size);
 
@@ -742,6 +765,17 @@ class MemoryOperations
         if (Instance.m_allocations.find(address) == Instance.m_allocations.end())
         {
             SUSPEND_COMPAT("Invalid '0x%X' pointer param to unknown or already freed memory", address);
+            return OR_CONTINUE;
+        }
+
+        // check if end marker is still intact
+        if (!Instance.ValidateMemoryAllocation(thread, address))
+        {
+            SUSPEND_COMPAT(
+                "Memory corruption detected!\n\nAt some point an out-of-bounds write was performed on memory obtained "
+                "via ALLOCATE_MEMORY command.\nAffected block is at 0x%X, allocated size %d.\n\nOccured",
+                address, Instance.m_allocations.at(address)
+            );
             return OR_CONTINUE;
         }
 
