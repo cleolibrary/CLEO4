@@ -13,6 +13,7 @@
 #include "CSoundSystem.h"
 #include "FileEnumerator.h"
 #include "crc32.h"
+#include "CUacHelper.h"
 
 namespace CLEO
 {
@@ -39,6 +40,7 @@ namespace CLEO
             CreateDirectory("cleo", NULL);
             CreateDirectory("cleo/cleo_saves", NULL);
             CreateDirectory("cleo/cleo_text", NULL);
+            CUacHelper::EnsureDirectoryExists(CUacHelper::GetCleoSavesDirectory(true));
             CodeInjector.OpenReadWriteAccess();		// must do this earlier to ensure plugins write access on init
             GameMenu.Inject(CodeInjector);
             DmaFix.Inject(CodeInjector);

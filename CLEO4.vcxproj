@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Release GTASA|Win32">
@@ -25,6 +25,7 @@
     <ClCompile Include="source\CTextManager.cpp" />
     <ClCompile Include="source\dllmain.cpp" />
     <ClCompile Include="source\PluginSdkExternals.cpp" />
+    <ClCompile Include="source\CUacHelper.cpp" />
     <ClCompile Include="source\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release GTASA|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug GTASA|Win32'">Create</PrecompiledHeader>
@@ -46,6 +47,7 @@
     <ClInclude Include="source\CSoundSystem.h" />
     <ClInclude Include="source\CTextManager.h" />
     <ClInclude Include="source\CTheScripts.h" />
+    <ClInclude Include="source\CUacHelper.h" />
     <ClInclude Include="source\FileEnumerator.h" />
     <ClInclude Include="source\Mem.h" />
     <ClInclude Include="source\resource.h" />

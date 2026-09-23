@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <shlobj.h>
 #include "CLEO.h"
 
 class IniFiles {
@@ -18,20 +19,145 @@ public:
 			MessageBox(HWND_DESKTOP, "An incorrect version of CLEO was loaded.", "IniFiles.cleo", MB_ICONERROR);
 	}
 
-	static char* MakeFullPath(char *path, char *dst)
+	static void EnsureDirExists(const char* filePath)
 	{
-		if (path[1] != ':')
+		if (!filePath || !*filePath) return;
+		char dir[MAX_PATH];
+		strncpy(dir, filePath, MAX_PATH - 1);
+		dir[MAX_PATH - 1] = '\0';
+		char* p = strrchr(dir, '\\');
+		if (!p) p = strrchr(dir, '/');
+		if (p)
 		{
-			//get current working directory
-			GetCurrentDirectory(MAX_PATH, dst);
-			strcat(dst, "\\");
-			strcat(dst, path);
+			*p = '\0';
+			char* start = dir;
+			if (strlen(start) > 2 && start[1] == ':')
+				start += 3;
+			for (char* s = start; *s; s++)
+			{
+				if (*s == '\\' || *s == '/')
+				{
+					*s = '\0';
+					CreateDirectoryA(dir, NULL);
+					*s = '\\';
+				}
+			}
+			CreateDirectoryA(dir, NULL);
+		}
+	}
+
+	static bool IsPathWritable(const char* path)
+	{
+		if (!path || !*path) return false;
+		char probe[MAX_PATH];
+		strncpy(probe, path, MAX_PATH - 1);
+		probe[MAX_PATH - 1] = '\0';
+		char* p = strrchr(probe, '\\');
+		if (!p) p = strrchr(probe, '/');
+		if (p) *(p + 1) = '\0';
+		else strcpy(probe, ".\\");
+
+		sprintf(probe + strlen(probe), "__cleo_ini_probe_%lu.tmp", GetCurrentProcessId());
+		HANDLE hProbe = CreateFileA(probe, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+		if (hProbe != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(hProbe);
+			return true;
+		}
+		return false;
+	}
+
+	static bool GetUserFilesPath(const char* relativePath, char* dst)
+	{
+		if (!relativePath || !*relativePath || !dst) return false;
+		char myDocs[MAX_PATH];
+		if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_MYDOCUMENTS, NULL, SHGFP_TYPE_CURRENT, myDocs)))
+		{
+			// Skip leading slashes in relativePath if any
+			while (*relativePath == '\\' || *relativePath == '/') relativePath++;
+			sprintf(dst, "%s\\GTA San Andreas User Files\\%s", myDocs, relativePath);
+			return true;
+		}
+		return false;
+	}
+
+	static char* MakeFullPath(const char *path, char *dst)
+	{
+		if (!dst) return dst;
+		if (!path || !*path)
+		{
+			*dst = '\0';
+			return dst;
+		}
+
+		if (strlen(path) > 1 && path[1] == ':')
+		{
+			strncpy(dst, path, MAX_PATH - 1);
+			dst[MAX_PATH - 1] = '\0';
 		}
 		else
 		{
-			strcpy(dst, path);
+			//get current working directory
+			GetCurrentDirectoryA(MAX_PATH, dst);
+			size_t len = strlen(dst);
+			if (len > 0 && dst[len - 1] != '\\' && dst[len - 1] != '/')
+			{
+				strncat(dst, "\\", MAX_PATH - len - 1);
+			}
+			strncat(dst, path, MAX_PATH - strlen(dst) - 1);
 		}
 		return dst;
+	}
+
+	static char* ResolveIniReadPath(const char* path, char* dst)
+	{
+		MakeFullPath(path, dst);
+		if (path && *path && (strlen(path) < 2 || path[1] != ':') && path[0] != '\\' && path[0] != '/')
+		{
+			char userPath[MAX_PATH];
+			if (GetUserFilesPath(path, userPath))
+			{
+				if (GetFileAttributesA(userPath) != INVALID_FILE_ATTRIBUTES)
+				{
+					if (GetFileAttributesA(dst) == INVALID_FILE_ATTRIBUTES || !IsPathWritable(dst))
+					{
+						strncpy(dst, userPath, MAX_PATH - 1);
+						dst[MAX_PATH - 1] = '\0';
+						return dst;
+					}
+				}
+			}
+		}
+		return dst;
+	}
+
+	static BOOL SafeWritePrivateProfileString(const char* sectionName, const char* key, const char* value, const char* path)
+	{
+		if (!path || !*path) return FALSE;
+
+		char iniPath[MAX_PATH];
+		MakeFullPath(path, iniPath);
+
+		BOOL result = WritePrivateProfileStringA(sectionName, key, value, iniPath);
+		if (result) return TRUE;
+
+		if ((strlen(path) < 2 || path[1] != ':') && path[0] != '\\' && path[0] != '/')
+		{
+			char userPath[MAX_PATH];
+			if (GetUserFilesPath(path, userPath))
+			{
+				EnsureDirExists(userPath);
+				if (GetFileAttributesA(userPath) == INVALID_FILE_ATTRIBUTES && GetFileAttributesA(iniPath) != INVALID_FILE_ATTRIBUTES)
+				{
+					if (CopyFileA(iniPath, userPath, TRUE))
+					{
+						SetFileAttributesA(userPath, FILE_ATTRIBUTE_NORMAL);
+					}
+				}
+				return WritePrivateProfileStringA(sectionName, key, value, userPath);
+			}
+		}
+		return FALSE;
 	}
 
 	static OpcodeResult WINAPI Script_InifileGetInt(CScriptThread* thread)
@@ -50,8 +176,8 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, GetPrivateProfileInt() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		// Resolve path taking into account UAC and User Files
+		ResolveIniReadPath(path, iniPath);
 
 		result = GetPrivateProfileInt(sectionName, key, 0x80000000, iniPath);
 		CLEO_SetIntOpcodeParam(thread, result);
@@ -66,7 +192,6 @@ public:
 		0AF1=4,write_int %1d% to_ini_file %2s% section %3s% key %4s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
 		char path[100];
 		char sectionName[100];
 		char key[100];
@@ -79,10 +204,7 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, WritePrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
-
-		result = WritePrivateProfileString(sectionName, key, _itoa(value, strValue, 10), iniPath);
+		result = SafeWritePrivateProfileString(sectionName, key, _itoa(value, strValue, 10), path);
 		CLEO_SetThreadCondResult(thread, result);
 
 		return OR_CONTINUE;
@@ -106,8 +228,8 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, GetPrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		// Resolve path taking into account UAC and User Files
+		ResolveIniReadPath(path, iniPath);
 
 		result = GetPrivateProfileString(sectionName, key, NULL, strValue, sizeof(strValue), iniPath);
 		if (result)
@@ -129,7 +251,6 @@ public:
 		0AF3=4,write_float %1d% to_ini_file %2s% section %3s% key %4s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
 		char path[100];
 		char sectionName[100];
 		char key[100];
@@ -142,12 +263,9 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, WritePrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
-
 		sprintf(strValue, "%g", value);
 
-		result = WritePrivateProfileString(sectionName, key, strValue, iniPath);
+		result = SafeWritePrivateProfileString(sectionName, key, strValue, path);
 		CLEO_SetThreadCondResult(thread, result);
 
 		return OR_CONTINUE;
@@ -171,8 +289,8 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, GetPrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
+		// Resolve path taking into account UAC and User Files
+		ResolveIniReadPath(path, iniPath);
 
 		result = GetPrivateProfileString(sectionName, key, NULL, strValue, sizeof(strValue), iniPath);
 		if (result)
@@ -204,7 +322,6 @@ public:
 		0AF5=4,write_string %1s% to_ini_file %2s% section %3s% key %4s%
 		****************************************************************/
 	{
-		char iniPath[MAX_PATH];
 		char path[100];
 		char sectionName[100];
 		char key[100];
@@ -228,10 +345,7 @@ public:
 		CLEO_ReadStringPointerOpcodeParam(thread, sectionName, sizeof(sectionName));
 		CLEO_ReadStringPointerOpcodeParam(thread, key, sizeof(key));
 
-		//if path is short, WritePrivateProfileString() searches for the file in the Windows directory
-		MakeFullPath(path, iniPath);
-
-		result = WritePrivateProfileString(sectionName, key, strValue, iniPath);
+		result = SafeWritePrivateProfileString(sectionName, key, strValue, path);
 
 		CLEO_SetThreadCondResult(thread, result);
 

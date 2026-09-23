@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "cleo.h"
+#include "CUacHelper.h"
 
 namespace CLEO
 {
@@ -676,7 +677,9 @@ namespace CLEO
         CGameVersionManager& gvm = GetInstance().VersionManager;
         int nSlot = gvm.GetGameVersion() != GV_STEAM ? *(BYTE*)&MenuManager->m_nSelectedSaveGame : *((BYTE*)MenuManager + 0x15B);
 
-        sprintf(safe_name, "./cleo/cleo_saves/cs%d.sav", nSlot);
+        std::string resolvedPath = CUacHelper::ResolveSaveFilePath(nSlot, false);
+        strncpy(safe_name, resolvedPath.c_str(), sizeof(safe_name));
+        safe_name[sizeof(safe_name) - 1] = '\0';
 
         safe_info = nullptr;
         stopped_info = nullptr;
@@ -806,11 +809,14 @@ namespace CLEO
             int nSlot = gvm.GetGameVersion() != GV_STEAM ? *(BYTE*)&MenuManager->m_nSelectedSaveGame : *((BYTE*)MenuManager + 0x15B);
 
             char safe_name[MAX_PATH];
-            sprintf(safe_name, "./cleo/cleo_saves/cs%d.sav", nSlot);
+            std::string resolvedPath = CUacHelper::ResolveSaveFilePath(nSlot, true);
+            strncpy(safe_name, resolvedPath.c_str(), sizeof(safe_name));
+            safe_name[sizeof(safe_name) - 1] = '\0';
             TRACE("Saving script engine state to the file %s", safe_name);
 
             CreateDirectory("cleo", NULL);
             CreateDirectory("cleo/cleo_saves", NULL);
+            CUacHelper::EnsureDirectoryExists(CUacHelper::GetCleoSavesDirectory(true));
             std::ofstream ss(safe_name, std::ios::binary);
             if (ss.is_open())
             {

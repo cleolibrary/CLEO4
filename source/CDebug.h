@@ -1,4 +1,5 @@
 #pragma once
+#include "CUacHelper.h"
 
 #define TRACE __noop
 
@@ -6,8 +7,6 @@
 #undef TRACE
 #define TRACE(a,...) {Debug.Trace(a, __VA_ARGS__);}
 #endif
-
-const char szLogFileName[] = "cleo.log";
 
 class CDebug
 {
@@ -18,7 +17,7 @@ class CDebug
 public:
 #ifdef DEBUGIT
 
-    CDebug() : m_hFile(szLogFileName)
+    CDebug() : m_hFile(CLEO::CUacHelper::ResolveLogFilePath().c_str())
     {
         Trace("Log started.");
     }

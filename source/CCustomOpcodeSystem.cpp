@@ -5,6 +5,7 @@
 #include "CCustomOpcodeSystem.h"
 #include "CTextManager.h"
 #include "CModelInfo.h"
+#include "CUacHelper.h"
 
 namespace CLEO {
 	DWORD FUNC_fopen;
@@ -734,6 +735,15 @@ namespace CLEO {
 	inline DWORD open_file(const char * szPath, const char * szMode, bool bLegacy)
 	{
 		FILE * hFile = bLegacy ? legacy_fopen(szPath, szMode) : fopen(szPath, szMode);
+		if (!hFile && szPath && szMode)
+		{
+			bool isWrite = (strchr(szMode, 'w') || strchr(szMode, 'a') || strchr(szMode, '+'));
+			std::string altPath = isWrite ? CUacHelper::ResolveWritablePath(szPath) : CUacHelper::ResolveReadablePath(szPath);
+			if (!altPath.empty() && altPath != szPath)
+			{
+				hFile = bLegacy ? legacy_fopen(altPath.c_str(), szMode) : fopen(altPath.c_str(), szMode);
+			}
+		}
 		if (hFile) return bLegacy ? (DWORD)hFile : (DWORD)hFile | 0x1;
 		return NULL;
 	}
